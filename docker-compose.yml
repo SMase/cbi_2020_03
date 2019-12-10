@@ -1,0 +1,25 @@
+version: "2.3"
+services:
+ gnn_dti:
+    build:
+      context: .
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        USERNAME: ${USERNAME}
+
+    user: "${UID}:${GID}"
+
+    volumes:
+     - .:/home/${USERNAME}/src
+    runtime: nvidia
+    environment:
+      - UID
+      - GID
+      - USERNAME
+      - TZ
+      - NVIDIA_VISIBLE_DEVICES=all
+
+    working_dir: /home/${USERNAME}/src
+    tty: true
+    privileged: true
