@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import random
 from rdkit import Chem
+import gzip
 from scipy.spatial import distance_matrix
 from rdkit.Chem.rdmolops import GetAdjacencyMatrix
 import pickle
@@ -34,7 +35,10 @@ class MolDataset(Dataset):
     def __getitem__(self, idx):
         #idx = 0
         key = self.keys[idx]
-        with open(self.data_dir+'/'+key, 'rb') as f:
+        # with open(self.data_dir+'/'+key, 'rb') as f:
+        #     m1, m2 = pickle.load(f)
+
+        with gzip.open(self.data_dir+'{0}/{0}_pair.pkl.gz'.format(key), 'rb') as f:
             m1, m2 = pickle.load(f)
 
         #prepare ligand
@@ -64,9 +68,11 @@ class MolDataset(Dataset):
         #node indice for aggregation
         valid = np.zeros((n1+n2,))
         valid[:n1] = 1
+
+        Y = float(np.loadtxt(self.data_dir+'/{0}/value'.format(key)))
         
         #pIC50 to class
-        Y = 1 if 'CHEMBL' in key else 0
+        # Y = 1 if 'CHEMBL' in key else 0
 
         #if n1+n2 > 300 : return None
         sample = {
