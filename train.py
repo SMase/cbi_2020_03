@@ -1,20 +1,16 @@
-import pickle
 from gnn import gnn
-import time
 import numpy as np
 import utils
 import torch.nn as nn
 import torch
-import time
 import os
-from sklearn.metrics import roc_auc_score
 import argparse
 import time
 from torch.utils.data import DataLoader                                     
-from dataset import MolDataset, collate_fn, DTISampler
+from dataset import MolDataset, collate_fn
 now = time.localtime()
 s = "%04d-%02d-%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
-print (s)
+print(s)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--lr", help="learning rate", type=float, default=0.0001)
@@ -26,22 +22,23 @@ parser.add_argument("--n_graph_layer", help="number of GNN layer", type=int, def
 parser.add_argument("--d_graph_layer", help="dimension of GNN layer", type=int, default=140)
 parser.add_argument("--n_FC_layer", help="number of FC layer", type=int, default=4)
 parser.add_argument("--d_FC_layer", help="dimension of FC layer", type=int, default=128)
-parser.add_argument("--dude_data_fpath", help="file path of dude data", type=str, default='data/data_select/')
+parser.add_argument("--data_fpath", help="file path of dude data", type=str, default='data_select/')
+parser.add_argument("--distance", help="allowable distance between pocket atom and ligand atom", type=float, default=5.0)
 parser.add_argument("--save_dir", help="save directory of model parameter", type=str, default='./save/')
 parser.add_argument("--initial_mu", help="initial value of mu", type=float, default=4.461085466198279)
 parser.add_argument("--initial_dev", help="initial value of dev", type=float, default=0.19818493842903845)
 parser.add_argument("--dropout_rate", help="dropout_rate", type=float, default=0.3)
-parser.add_argument("--train_keys", help="train keys", type=str, default='keys/train_keys.pkl')
-parser.add_argument("--test_keys", help="test keys", type=str, default='keys/val_keys.pkl')
+parser.add_argument("--train_keys", help="train keys", type=str, default='keys/train_keys.txt')
+parser.add_argument("--test_keys", help="test keys", type=str, default='keys/val_keys.txt')
 args = parser.parse_args()
-print (args)
+print(args)
 
 # hyper parameters
 num_epochs = args.epoch
 lr = args.lr
 ngpu = args.ngpu
 batch_size = args.batch_size
-dude_data_fpath = args.dude_data_fpath
+data_fpath = args.data_fpath
 save_dir = args.save_dir
 
 # make save dir if it doesn't exist
@@ -50,10 +47,12 @@ if not os.path.isdir(save_dir):
 
 # read data. data is stored in format of dictionary.
 # Each key has information about protein-ligand complex.
-with open(args.train_keys, 'rb') as fp:
-    train_keys = pickle.load(fp)
-with open(args.test_keys, 'rb') as fp:
-    test_keys = pickle.load(fp)
+with open(args.train_keys, 'r') as fp:
+    train_keys = fp.read()
+train_keys = train_keys.split('\n')
+with open(args.test_keys, 'r') as fp:
+    test_keys = fp.read()
+test_keys = test_keys.split('\n')
 
 # print simple statistics about dude data and pdbbind data
 print(f'Number of train data: {len(train_keys)}')
@@ -69,16 +68,13 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = utils.initialize_model(model, device)
 
 # train and test dataset
-train_dataset = MolDataset(train_keys, args.dude_data_fpath)
-test_dataset = MolDataset(test_keys, args.dude_data_fpath)
-# num_train_chembl = len([0 for k in train_keys if 'CHEMBL' in k])
-# num_train_decoy = len([0 for k in train_keys if 'CHEMBL' not in k])
-# train_weights = [1/num_train_chembl if 'CHEMBL' in k else 1/num_train_decoy for k in train_keys]
-# train_sampler = DTISampler(train_weights, len(train_weights), replacement=True)
+train_dataset = MolDataset(train_keys, args.data_fpath, args.distance)
+test_dataset = MolDataset(test_keys, args.data_fpath, args.distance)
+
 train_dataloader = DataLoader(train_dataset, args.batch_size, \
-     shuffle=False, num_workers = args.num_workers, collate_fn=collate_fn)
+     shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
 test_dataloader = DataLoader(test_dataset, args.batch_size, \
-     shuffle=False, num_workers = args.num_workers, collate_fn=collate_fn)
+     shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
 
 #optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -143,24 +139,11 @@ for epoch in range(num_epochs):
         
     train_losses = np.mean(np.array(train_losses))
     test_losses = np.mean(np.array(test_losses))
-    
-    # train_pred = np.concatenate(np.array(train_pred), 0)
-    # test_pred = np.concatenate(np.array(test_pred), 0)
-    #
-    # train_true = np.concatenate(np.array(train_true), 0)
-    # test_true = np.concatenate(np.array(test_true), 0)
-
-    # train_roc = roc_auc_score(train_true, train_pred)
-    # test_roc = roc_auc_score(test_true, test_pred)
     end = time.time()
     best_train_loss = train_losses if train_losses < best_train_loss else best_train_loss
 
-
-
     # print ("%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f" \
     # %(epoch, train_losses, test_losses, train_roc, test_roc, end-st))
-    # name = save_dir + '/save_'+str(epoch)+'.pt'
-    # torch.save(model.state_dict(), name)
 
     if test_losses < best_val_loss:
         best_val_loss = test_losses

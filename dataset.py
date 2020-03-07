@@ -5,10 +5,10 @@ import numpy as np
 import torch
 import random
 from rdkit import Chem
-import gzip
 from scipy.spatial import distance_matrix
 from rdkit.Chem.rdmolops import GetAdjacencyMatrix
 import pickle
+import pandas as pd
 random.seed(0)
 
 def get_atom_feature(m, is_ligand=True):
@@ -25,21 +25,23 @@ def get_atom_feature(m, is_ligand=True):
 
 class MolDataset(Dataset):
 
-    def __init__(self, keys, data_dir):
+    def __init__(self, keys, data_dir, distance):
         self.keys = keys
         self.data_dir = data_dir
+        self.data_df = pd.read_csv('data.csv')
+        self.distance = distance
 
     def __len__(self):
         return len(self.keys)
 
     def __getitem__(self, idx):
-        #idx = 0
         key = self.keys[idx]
-        # with open(self.data_dir+'/'+key, 'rb') as f:
-        #     m1, m2 = pickle.load(f)
 
-        with gzip.open(self.data_dir+'{0}/{0}_pair.pkl.gz'.format(key), 'rb') as f:
+        with open(self.data_dir+'{0}.pair_{1}.pkl'.format(key, self.distance), 'rb') as f:
             m1, m2 = pickle.load(f)
+
+        # with open(self.data_dir+'{0}_pair.pkl'.format(key), 'rb') as f:
+        #     m1, m2 = pickle.load(f)
 
         #prepare ligand
         n1 = m1.GetNumAtoms()
@@ -69,7 +71,8 @@ class MolDataset(Dataset):
         valid = np.zeros((n1+n2,))
         valid[:n1] = 1
 
-        Y = float(np.loadtxt(self.data_dir+'/{0}/value'.format(key)))
+        #Y = float(np.loadtxt(self.data_dir+'/{0}/value'.format(key)))
+        Y = self.data_df[self.data_df['pdbid'] == key]['pvalue'].values[0]
         
         #pIC50 to class
         # Y = 1 if 'CHEMBL' in key else 0
