@@ -6,6 +6,7 @@ import torch
 import os
 import argparse
 import time
+import pandas as pd
 from torch.utils.data import DataLoader                                     
 from dataset import MolDataset, collate_fn
 now = time.localtime()
@@ -47,29 +48,33 @@ if not os.path.isdir(save_dir):
 
 # read data. data is stored in format of dictionary.
 # Each key has information about protein-ligand complex.
-with open(args.train_keys, 'r') as fp:
-    train_keys = fp.read()
-train_keys = train_keys.split('\n')
-with open(args.test_keys, 'r') as fp:
-    test_keys = fp.read()
-test_keys = test_keys.split('\n')
+train_df = pd.read_csv(args.train_keys, sep='\t')
+train_keys = list(train_df['PDB'])
+train_pkd = list(np.round(train_df['pKd'], 3))
+
+test_df = pd.read_csv(args.test_keys, sep='\t')
+test_keys = list(test_df['PDB'])
+test_pkd = list(np.round(test_df['pKd'], 3))
 
 # print simple statistics about dude data and pdbbind data
 print(f'Number of train data: {len(train_keys)}')
 print(f'Number of test data: {len(test_keys)}')
 
 # initialize model
+device = "cpu"
 if args.ngpu>0:
     cmd = utils.set_cuda_visible_device(args.ngpu)
     os.environ['CUDA_VISIBLE_DEVICES']=cmd[:-1]
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 model = gnn(args)
 print ('number of parameters : ', sum(p.numel() for p in model.parameters() if p.requires_grad))
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 model = utils.initialize_model(model, device)
 
 # train and test dataset
-train_dataset = MolDataset(train_keys, args.data_fpath, args.distance)
-test_dataset = MolDataset(test_keys, args.data_fpath, args.distance)
+train_dataset = MolDataset(train_keys, train_pkd, args.data_fpath, args.distance)
+test_dataset = MolDataset(test_keys, test_pkd, args.data_fpath, args.distance)
 
 train_dataloader = DataLoader(train_dataset, args.batch_size, \
      shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
@@ -117,7 +122,6 @@ for epoch in range(num_epochs):
         train_losses.append(loss.data.cpu().numpy())
         train_true.append(Y.data.cpu().numpy())
         train_pred.append(pred.data.cpu().numpy())
-        #if i_batch>10 : break
     
     model.eval()
     for i_batch, sample in enumerate(test_dataloader):
@@ -133,17 +137,11 @@ for epoch in range(num_epochs):
         
         #collect loss, true label and predicted label
         test_losses.append(loss.data.cpu().numpy())
-        # test_true.append(Y.data.cpu().numpy())
-        # test_pred.append(pred.data.cpu().numpy())
-        #if i_batch>10 : break
         
     train_losses = np.mean(np.array(train_losses))
     test_losses = np.mean(np.array(test_losses))
     end = time.time()
     best_train_loss = train_losses if train_losses < best_train_loss else best_train_loss
-
-    # print ("%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f" \
-    # %(epoch, train_losses, test_losses, train_roc, test_roc, end-st))
 
     if test_losses < best_val_loss:
         best_val_loss = test_losses

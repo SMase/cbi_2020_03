@@ -28,7 +28,6 @@ def yyplot(y_obs, y_pred):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--lr", help="learning rate", type=float, default=0.0001)
-parser.add_argument("--epoch", help="epoch", type=int, default=5)
 parser.add_argument("--ngpu", help="number of gpu", type=int, default=1)
 parser.add_argument("--batch_size", help="batch_size", type=int, default=8)
 parser.add_argument("--num_workers", help="number of workers", type=int, default=7)
@@ -59,12 +58,12 @@ model_path = args.save_dir + "model_weights.pt"
 model = gnn(prm)
 model.load_state_dict(torch.load(model_path))
 
-with open(args.test_keys, 'r') as fp:
-    test_keys = fp.read()
-test_keys = test_keys.split('\n')
+test_df = pd.read_csv(args.test_keys, sep='\t')
+test_keys = list(test_df['PDB'])
+test_pkd = list(np.round(test_df['pKd'], 3))
 
 dataset_path = args.data_fpath
-test_dataset = MolDataset(test_keys, dataset_path, args.distance)
+test_dataset = MolDataset(test_keys, test_pkd, dataset_path, args.distance)
 
 test_dataloader = DataLoader(test_dataset, 10, shuffle=True, num_workers=10, collate_fn=collate_fn)
 

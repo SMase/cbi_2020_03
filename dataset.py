@@ -1,14 +1,15 @@
 from torch.utils.data import Dataset
 from torch.utils.data.sampler import Sampler
+import os
 import utils
 import numpy as np
 import torch
 import random
-from rdkit import Chem
+
 from scipy.spatial import distance_matrix
 from rdkit.Chem.rdmolops import GetAdjacencyMatrix
 import pickle
-import pandas as pd
+
 random.seed(0)
 
 def get_atom_feature(m, is_ligand=True):
@@ -25,11 +26,11 @@ def get_atom_feature(m, is_ligand=True):
 
 class MolDataset(Dataset):
 
-    def __init__(self, keys, data_dir, distance):
-        self.keys = keys
+    def __init__(self, keys, pKd, data_dir, distance):
         self.data_dir = data_dir
-        self.data_df = pd.read_csv('data.csv')
+        # self.data_df = pd.read_csv('data.csv')
         self.distance = distance
+        self.keys, self.pKd = self.check_data(keys, pKd)
 
     def __len__(self):
         return len(self.keys)
@@ -37,7 +38,7 @@ class MolDataset(Dataset):
     def __getitem__(self, idx):
         key = self.keys[idx]
 
-        with open(self.data_dir+'{0}.pair_{1}.pkl'.format(key, self.distance), 'rb') as f:
+        with open(self.data_dir+'{0}/{0}.pair_{1}.pkl'.format(key, self.distance), 'rb') as f:
             m1, m2 = pickle.load(f)
 
         # with open(self.data_dir+'{0}_pair.pkl'.format(key), 'rb') as f:
@@ -71,8 +72,10 @@ class MolDataset(Dataset):
         valid = np.zeros((n1+n2,))
         valid[:n1] = 1
 
+        Y = self.pKd[idx]
+
         #Y = float(np.loadtxt(self.data_dir+'/{0}/value'.format(key)))
-        Y = self.data_df[self.data_df['pdbid'] == key]['pvalue'].values[0]
+        #Y = self.data_df[self.data_df['pdbid'] == key]['pvalue'].values[0]
         
         #pIC50 to class
         # Y = 1 if 'CHEMBL' in key else 0
@@ -88,6 +91,24 @@ class MolDataset(Dataset):
                   }
 
         return sample
+
+    def check_data(self, keys, val):
+        checked_pdb = []
+        checked_pKd = []
+        for pdb, pkd in zip(keys, val):
+            chk_dir = os.path.join(self.data_dir, pdb)
+            if not os.path.isdir(chk_dir):
+                print('Warnings: There is no directory. ({})'.format(chk_dir))
+                continue
+            chk_file = os.path.join(self.data_dir, pdb, "{0}.pair_{1}.pkl".format(pdb, self.distance))
+            # chk_file = os.path.join(self.data_dir, '{0}_pair.pkl'.format(pdb))
+            if not os.path.isfile(chk_file):
+                print('Warnings: There is no file. ({})'.format(chk_file))
+                continue
+
+            checked_pdb.append(pdb)
+            checked_pKd.append(pkd)
+        return checked_pdb, checked_pKd
 
 class DTISampler(Sampler):
 
