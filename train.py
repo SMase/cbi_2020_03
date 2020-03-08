@@ -61,11 +61,12 @@ print(f'Number of train data: {len(train_keys)}')
 print(f'Number of test data: {len(test_keys)}')
 
 # initialize model
-device = "cpu"
-if args.ngpu>0:
-    cmd = utils.set_cuda_visible_device(args.ngpu)
-    os.environ['CUDA_VISIBLE_DEVICES']=cmd[:-1]
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# device = "cpu"
+# if args.ngpu>0:
+    # cmd = utils.set_cuda_visible_device(args.ngpu)
+    # os.environ['CUDA_VISIBLE_DEVICES']=cmd[:-1]
+
 
 model = gnn(args)
 print ('number of parameters : ', sum(p.numel() for p in model.parameters() if p.requires_grad))
