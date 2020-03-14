@@ -135,15 +135,17 @@ def collate_fn(batch):
     Y = np.zeros((len(batch),))
     V = np.zeros((len(batch), max_natoms))
     keys = []
+    n_atom = []
     
     for i in range(len(batch)):
         natom = len(batch[i]['H'])
-        
+
         H[i,:natom] = batch[i]['H']
         A1[i,:natom,:natom] = batch[i]['A1']
         A2[i,:natom,:natom] = batch[i]['A2']
         Y[i] = batch[i]['Y']
         V[i,:natom] = batch[i]['V']
+        n_atom.append(natom)
         keys.append(batch[i]['key'])
 
     H = torch.from_numpy(H).float()
@@ -152,5 +154,4 @@ def collate_fn(batch):
     Y = torch.from_numpy(Y).float()
     V = torch.from_numpy(V).float()
     
-    return H, A1, A2, Y, V, keys
-
+    return H, A1, A2, Y, V, keys, n_atom

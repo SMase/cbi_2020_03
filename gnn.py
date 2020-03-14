@@ -30,9 +30,10 @@ class gnn(torch.nn.Module):
         self.embede = nn.Linear(2*N_atom_features, d_graph_layer, bias = False)
         
 
-    def embede_graph(self, data):
+    def embede_graph(self, data, is_train=True):
         c_hs, c_adjs1, c_adjs2, c_valid = data
-        c_hs = self.embede(c_hs)
+        if is_train:
+            c_hs = self.embede(c_hs)
         hs_size = c_hs.size()
         c_adjs2 = torch.exp(-torch.pow(c_adjs2-self.mu.expand_as(c_adjs2), 2)/self.dev) + c_adjs1
         regularization = torch.empty(len(self.gconv1), device=c_hs.device)
@@ -74,8 +75,8 @@ class gnn(torch.nn.Module):
         #note that if you don't use concrete dropout, regularization 1-2 is zero
         return c_hs
     
-    def test_model(self,data1 ):
-        c_hs = self.embede_graph(data1)
+    def test_model(self, data):
+        c_hs = self.embede_graph(data, is_train=False)
         c_hs = self.fully_connected(c_hs)
         c_hs = c_hs.view(-1)
         return c_hs

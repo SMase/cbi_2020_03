@@ -9,6 +9,8 @@ import pandas as pd
 import argparse
 import itertools
 
+from saliency import VanillaGrad
+
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
@@ -42,6 +44,8 @@ parser.add_argument("--initial_mu", help="initial value of mu", type=float, defa
 parser.add_argument("--initial_dev", help="initial value of dev", type=float, default=0.19818493842903845)
 parser.add_argument("--dropout_rate", help="dropout_rate", type=float, default=0.3)
 parser.add_argument("--test_keys", help="test keys", type=str, default='keys/test_keys.txt')
+parser.add_argument("--map_th_max", help="max th value for saliency map", type=int, default=20)
+parser.add_argument("--map_th_min", help="min th value for saliency map", type=int, default=-20)
 args = parser.parse_args()
 print(args)
 
@@ -70,18 +74,32 @@ test_dataloader = DataLoader(test_dataset, 10, shuffle=True, num_workers=10, col
 test_true = []
 test_pred = []
 test_label = []
+
+saliency_list = []
+n_atom_list = []
+
 model.eval()
 for i_batch, sample in enumerate(test_dataloader):
     model.zero_grad()
-    H, A1, A2, Y, V, keys = sample
+    H, A1, A2, Y, V, keys, n_atom = sample
 
     #train neural network
-    pred = model.train_model((H, A1, A2, V))
+    embed = model.embede(H)
+    model.zero_grad()
+    pred = model.test_model((embed, A1, A2, V))
+
+    out = torch.sum(pred)
+    embed.retain_grad()
+    out.backward()
+    saliency = embed.grad.clone()
+    saliency *= embed.data.clone()
 
     #collect loss, true label and predicted label
     test_true.append(Y.data.cpu().numpy())
     test_pred.append(pred.data.cpu().numpy())
     test_label.append(keys)
+    saliency_list.append(saliency)
+    n_atom_list.append(n_atom)
 
 test_pred = np.concatenate(np.array(test_pred), 0)
 test_true = np.concatenate(np.array(test_true), 0)
@@ -92,11 +110,14 @@ r2_p = stats.pearsonr(test_true, test_pred)
 print("rmse: {}\nmae: {}\nr2: {}".format(rmse, mae, r2_p[0]))
 yyplot(test_true, test_pred)
 
-
+pdb_list = list(itertools.chain.from_iterable(test_label))
 df = pd.DataFrame({
-    'PDB': list(itertools.chain.from_iterable(test_label)),
+    'PDB': pdb_list,
     'pKd': list(test_true),
     'predicted': list(test_pred)
 })
 
 df.round(3).to_csv("result.tsv", sep="\t")
+
+v_grad = VanillaGrad(th_max=args.map_th_max, th_min=args.map_th_min)
+v_grad.save_saliency_map(args, n_atom_list, saliency_list, pdb_list)
