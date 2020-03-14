@@ -113,7 +113,10 @@ class VanillaGrad(object):
             drawer.FinishDrawing()
             svg = drawer.GetDrawingText()
             ext = '.png'
-            save_filepath = os.path.join("./png", pdb_code + ext)
+
+            if not os.path.isdir(args.map_path):
+                os.mkdir(args.map_path)
+            save_filepath = os.path.join(args.map_path, pdb_code + ext)
 
             if save_filepath:
                 extention = save_filepath.split('.')[-1]

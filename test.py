@@ -44,6 +44,7 @@ parser.add_argument("--initial_mu", help="initial value of mu", type=float, defa
 parser.add_argument("--initial_dev", help="initial value of dev", type=float, default=0.19818493842903845)
 parser.add_argument("--dropout_rate", help="dropout_rate", type=float, default=0.3)
 parser.add_argument("--test_keys", help="test keys", type=str, default='keys/test_keys.txt')
+parser.add_argument("--map_path", help="savepath for saliency map", type=str, default='png/')
 parser.add_argument("--map_th_max", help="max th value for saliency map", type=int, default=20)
 parser.add_argument("--map_th_min", help="min th value for saliency map", type=int, default=-20)
 args = parser.parse_args()
