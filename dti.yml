@@ -67,6 +67,8 @@ dependencies:
     - ase==3.18.1
     - attrs==19.3.0
     - cachetools==4.0.0
+    - cairocffi==1.1.0
+    - cairosvg==2.4.2
     - chardet==3.0.4
     - click==7.0
     - cliff==2.18.0
@@ -74,8 +76,10 @@ dependencies:
     - cmd2==0.8.9
     - colorlog==4.1.0
     - configparser==4.0.2
+    - cssselect2==0.2.2
     - cycler==0.10.0
     - databricks-cli==0.9.1
+    - defusedxml==0.6.0
     - docker==4.2.0
     - easydict==1.9
     - entrypoints==0.3
@@ -130,11 +134,13 @@ dependencies:
     - tabulate==0.8.6
     - tensorboard==2.1.0
     - tensorboardx==1.9
+    - tinycss2==1.0.2
     - tqdm==4.42.1
     - urllib3==1.25.7
     - wcwidth==0.1.8
+    - webencodings==0.5.1
     - websocket-client==0.57.0
     - werkzeug==0.16.0
     - zipp==2.0.0
-prefix: /home/mase/miniconda3/envs/dti
+prefix: /data/l5_mase/miniconda3/envs/dti
 
