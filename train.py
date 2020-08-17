@@ -24,7 +24,6 @@ parser.add_argument("--d_graph_layer", help="dimension of GNN layer", type=int, 
 parser.add_argument("--n_FC_layer", help="number of FC layer", type=int, default=4)
 parser.add_argument("--d_FC_layer", help="dimension of FC layer", type=int, default=128)
 parser.add_argument("--data_fpath", help="file path of dude data", type=str, default='data_select/')
-parser.add_argument("--distance", help="allowable distance between pocket atom and ligand atom", type=float, default=5.0)
 parser.add_argument("--save_dir", help="save directory of model parameter", type=str, default='./save/')
 parser.add_argument("--initial_mu", help="initial value of mu", type=float, default=4.461085466198279)
 parser.add_argument("--initial_dev", help="initial value of dev", type=float, default=0.19818493842903845)
@@ -48,13 +47,21 @@ if not os.path.isdir(save_dir):
 
 # read data. data is stored in format of dictionary.
 # Each key has information about protein-ligand complex.
-train_df = pd.read_csv(args.train_keys, sep='\t')
-train_keys = list(train_df['PDB'])
-train_pkd = list(np.round(train_df['pKd'], 3))
+train_keys = []
+train_pkd = []
+for line in open(args.train_keys):
+    it = line.rstrip().split('\t')
+    pdb_code, ligand_name, year, value = it[0], it[1], int(it[2]), float(it[3])
+    train_keys.append(pdb_code)
+    train_pkd.append(value)
 
-test_df = pd.read_csv(args.test_keys, sep='\t')
-test_keys = list(test_df['PDB'])
-test_pkd = list(np.round(test_df['pKd'], 3))
+test_keys = []
+test_pkd = []
+for line in open(args.test_keys):
+    it = line.rstrip().split('\t')
+    pdb_code, ligand_name, year, value = it[0], it[1], int(it[2]), float(it[3])
+    test_keys.append(pdb_code)
+    test_pkd.append(value)
 
 # print simple statistics about dude data and pdbbind data
 print(f'Number of train data: {len(train_keys)}')
@@ -74,8 +81,11 @@ print ('number of parameters : ', sum(p.numel() for p in model.parameters() if p
 model = utils.initialize_model(model, device)
 
 # train and test dataset
-train_dataset = MolDataset(train_keys, train_pkd, args.data_fpath, args.distance)
-test_dataset = MolDataset(test_keys, test_pkd, args.data_fpath, args.distance)
+#train_dataset = MolDataset(train_keys, train_pkd, args.data_fpath, args.distance)
+#test_dataset = MolDataset(test_keys, test_pkd, args.data_fpath, args.distance)
+
+train_dataset = MolDataset(train_keys, train_pkd, args.data_fpath)
+test_dataset = MolDataset(test_keys, test_pkd, args.data_fpath)
 
 train_dataloader = DataLoader(train_dataset, args.batch_size, \
      shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
@@ -108,7 +118,7 @@ for epoch in range(num_epochs):
     model.train()
     for i_batch, sample in enumerate(train_dataloader):
         model.zero_grad()
-        H, A1, A2, Y, V, keys = sample 
+        H, A1, A2, Y, V, keys, _ = sample 
         H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device),\
                             Y.to(device), V.to(device)
         
@@ -127,7 +137,7 @@ for epoch in range(num_epochs):
     model.eval()
     for i_batch, sample in enumerate(test_dataloader):
         model.zero_grad()
-        H, A1, A2, Y, V, keys = sample 
+        H, A1, A2, Y, V, keys, _ = sample 
         H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device),\
                           Y.to(device), V.to(device)
         

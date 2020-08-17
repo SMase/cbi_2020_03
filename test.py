@@ -38,7 +38,6 @@ parser.add_argument("--d_graph_layer", help="dimension of GNN layer", type=int, 
 parser.add_argument("--n_FC_layer", help="number of FC layer", type=int, default=4)
 parser.add_argument("--d_FC_layer", help="dimension of FC layer", type=int, default=128)
 parser.add_argument("--data_fpath", help="file path of dude data", type=str, default='data_diff/')
-parser.add_argument("--distance", help="allowable distance between pocket atom and ligand atom", type=float, default=5.0)
 parser.add_argument("--save_dir", help="save directory of model parameter", type=str, default='./save/')
 parser.add_argument("--initial_mu", help="initial value of mu", type=float, default=4.461085466198279)
 parser.add_argument("--initial_dev", help="initial value of dev", type=float, default=0.19818493842903845)
@@ -63,12 +62,16 @@ model_path = args.save_dir + "model_weights.pt"
 model = gnn(prm)
 model.load_state_dict(torch.load(model_path))
 
-test_df = pd.read_csv(args.test_keys, sep='\t')
-test_keys = list(test_df['PDB'])
-test_pkd = list(np.round(test_df['pKd'], 3))
+test_keys = []
+test_pkd = []
+for line in open(args.test_keys):
+    it = line.rstrip().split('\t')
+    pdb_code, ligand_name, year, value = it[0], it[1], int(it[2]), float(it[3])
+    test_keys.append(pdb_code)
+    test_pkd.append(value)
 
 dataset_path = args.data_fpath
-test_dataset = MolDataset(test_keys, test_pkd, dataset_path, args.distance)
+test_dataset = MolDataset(test_keys, test_pkd, dataset_path)
 
 test_dataloader = DataLoader(test_dataset, 10, shuffle=True, num_workers=10, collate_fn=collate_fn)
 

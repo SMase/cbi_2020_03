@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import random
 
+from rdkit import Chem
 from scipy.spatial import distance_matrix
 from rdkit.Chem.rdmolops import GetAdjacencyMatrix
 import pickle
@@ -26,10 +27,9 @@ def get_atom_feature(m, is_ligand=True):
 
 class MolDataset(Dataset):
 
-    def __init__(self, keys, pKd, data_dir, distance):
+    def __init__(self, keys, pKd, data_dir):
         self.data_dir = data_dir
         # self.data_df = pd.read_csv('data.csv')
-        self.distance = distance
         self.keys, self.pKd = self.check_data(keys, pKd)
 
     def __len__(self):
@@ -38,8 +38,14 @@ class MolDataset(Dataset):
     def __getitem__(self, idx):
         key = self.keys[idx]
 
-        with open(self.data_dir+'{0}/{0}.pair_{1}.pkl'.format(key, self.distance), 'rb') as f:
-            m1, m2 = pickle.load(f)
+        pocket_fname = self.data_dir + '/' + key + '/' + key + '_pocket.pdb'
+        for f in os.listdir(self.data_dir + '/' + key):
+            if f.endswith('.sdf'):
+                ligand_name = f[:3]
+                ligand_fname = self.data_dir + '/' + key + '/' + ligand_name + '.sdf'
+                break
+        for m1 in Chem.SDMolSupplier(ligand_fname): break
+        m2 = Chem.MolFromPDBFile(pocket_fname)
 
         # with open(self.data_dir+'{0}_pair.pkl'.format(key), 'rb') as f:
         #     m1, m2 = pickle.load(f)
@@ -96,15 +102,15 @@ class MolDataset(Dataset):
         checked_pdb = []
         checked_pKd = []
         for pdb, pkd in zip(keys, val):
-            chk_dir = os.path.join(self.data_dir, pdb)
-            if not os.path.isdir(chk_dir):
-                print('Warnings: There is no directory. ({})'.format(chk_dir))
-                continue
-            chk_file = os.path.join(self.data_dir, pdb, "{0}.pair_{1}.pkl".format(pdb, self.distance))
-            # chk_file = os.path.join(self.data_dir, '{0}_pair.pkl'.format(pdb))
-            if not os.path.isfile(chk_file):
-                print('Warnings: There is no file. ({})'.format(chk_file))
-                continue
+            #chk_dir = os.path.join(self.data_dir, pdb)
+            #if not os.path.isdir(chk_dir):
+            #    print('Warnings: There is no directory. ({})'.format(chk_dir))
+            #    continue
+            #chk_file = os.path.join(self.data_dir, pdb, "{0}.pair.pkl".format(pdb))
+            ## chk_file = os.path.join(self.data_dir, '{0}_pair.pkl'.format(pdb))
+            #if not os.path.isfile(chk_file):
+            #    print('Warnings: There is no file. ({})'.format(chk_file))
+            #    continue
 
             checked_pdb.append(pdb)
             checked_pKd.append(pkd)
