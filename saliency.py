@@ -73,8 +73,18 @@ class VanillaGrad(object):
         scaler_vanilla = self.get_scaler(v_range_vanilla)
 
         for pdb_code, vanilla in zip(pdb_list, cliped_list):
-            with open(args.data_fpath + '{0}/{0}.pair_{1}.pkl'.format(pdb_code, args.distance), 'rb') as f:
-                m1, m2 = pickle.load(f)
+
+            pocket_fname = args.data_fpath + '/' + pdb_code + '/' + pdb_code + '_pocket.pdb'
+            for f in os.listdir(args.data_fpath + '/' + pdb_code):
+                if f.endswith('.sdf'):
+                    ligand_name = f[:3]
+                    ligand_fname = args.data_fpath + '/' + pdb_code + '/' + ligand_name + '.sdf'
+                    break
+            for m1 in Chem.SDMolSupplier(ligand_fname): break
+            m2 = Chem.MolFromPDBFile(pocket_fname)
+
+            #with open(args.data_fpath + '{0}/{0}.pair_{1}.pkl'.format(pdb_code, args.distance), 'rb') as f:
+            #    m1, m2 = pickle.load(f)
             ligand = m1
             l_num_atoms = ligand.GetNumAtoms()
             rdDepictor.Compute2DCoords(ligand)
