@@ -8,22 +8,37 @@ import random
 
 from rdkit import Chem
 from scipy.spatial import distance_matrix
-from rdkit.Chem.rdmolops import GetAdjacencyMatrix
+from rdkit.Chem.rdmolops import GetAdjacencyMatrix, Get3DDistanceMatrix
 import pickle
 
 random.seed(0)
 
 def get_atom_feature(m, is_ligand=True):
+    x = utils.get_atom_types(m)
     n = m.GetNumAtoms()
     H = []
     for i in range(n):
-        H.append(utils.atom_feature(m, i, None, None))
+        H.append(x[i])
+    H = np.array(H)        
+    if is_ligand:
+        H = np.concatenate([H, np.zeros((n,21))], 1)
+    else:
+        H = np.concatenate([np.zeros((n,21)), H], 1)
+    return H        
+
+"""
+def get_atom_feature(m, is_ligand=True):
+    n = m.GetNumAtoms()
+    H = []
+    for i in range(n):
+        H.append(utils.atom_feature(m, i))
     H = np.array(H)        
     if is_ligand:
         H = np.concatenate([H, np.zeros((n,28))], 1)
     else:
         H = np.concatenate([np.zeros((n,28)), H], 1)
     return H        
+"""
 
 class MolDataset(Dataset):
 
@@ -57,6 +72,9 @@ class MolDataset(Dataset):
         adj1 = GetAdjacencyMatrix(m1)+np.eye(n1)
         H1 = get_atom_feature(m1, True)
 
+        dis1 = Get3DDistanceMatrix(m1)
+        Adj1 = (dis1 < 4.0).astype(int)
+
         #prepare protein
         n2 = m2.GetNumAtoms()
         c2 = m2.GetConformers()[0]
@@ -64,6 +82,9 @@ class MolDataset(Dataset):
         adj2 = GetAdjacencyMatrix(m2)+np.eye(n2)
         H2 = get_atom_feature(m2, False)
         
+        dis2 = Get3DDistanceMatrix(m2)
+        Adj2 = (dis2 < 4.0).astype(int)
+
         #aggregation
         H = np.concatenate([H1, H2], 0)
         agg_adj1 = np.zeros((n1+n2, n1+n2))
@@ -73,6 +94,17 @@ class MolDataset(Dataset):
         dm = distance_matrix(d1,d2)
         agg_adj2[:n1,n1:] = np.copy(dm)
         agg_adj2[n1:,:n1] = np.copy(np.transpose(dm))
+
+        _tmp = (dm < 4.0).astype(int)
+        agg_Adj1 = np.zeros((n1+n2, n1+n2))
+        agg_Adj1[:n1, :n1] = Adj1
+        agg_Adj1[n1:, n1:] = Adj2
+        agg_Adj2 = np.copy(agg_Adj1)
+        dm = distance_matrix(d1, d2)
+        clo = (dm < 4.0).astype(int)
+        agg_Adj2[:n1, n1:] = clo
+        agg_Adj2[n1:, :n1] = clo.T
+        agg_Adj2 = agg_Adj2.astype(int)
 
         #node indice for aggregation
         valid = np.zeros((n1+n2,))
@@ -89,8 +121,8 @@ class MolDataset(Dataset):
         #if n1+n2 > 300 : return None
         sample = {
                   'H':H, \
-                  'A1': agg_adj1, \
-                  'A2': agg_adj2, \
+                  'A1': agg_Adj1, \
+                  'A2': agg_Adj2, \
                   'Y': Y, \
                   'V': valid, \
                   'key': key, \
@@ -135,7 +167,8 @@ class DTISampler(Sampler):
 def collate_fn(batch):
     max_natoms = max([len(item['H']) for item in batch if item is not None])
     
-    H = np.zeros((len(batch), max_natoms, 56))
+    #H = np.zeros((len(batch), max_natoms, 56))
+    H = np.zeros((len(batch), max_natoms, 42))
     A1 = np.zeros((len(batch), max_natoms, max_natoms))
     A2 = np.zeros((len(batch), max_natoms, max_natoms))
     Y = np.zeros((len(batch),))

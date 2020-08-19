@@ -152,6 +152,7 @@ for epoch in range(num_epochs):
     train_losses = np.mean(np.array(train_losses))
     test_losses = np.mean(np.array(test_losses))
     end = time.time()
+    lapse = end - st
     best_train_loss = train_losses if train_losses < best_train_loss else best_train_loss
 
     if test_losses < best_val_loss:
@@ -164,7 +165,4 @@ for epoch in range(num_epochs):
         name = save_dir + '/model_weights.pt'
         torch.save(model.state_dict(), name)
 
-    print("Epoch: {}\ttrain loss: {}\tval loss: {}\ttrain best loss: {}\tval best loss: {}".format(
-        epoch, train_losses, test_losses, best_train_loss, best_val_loss
-    ))
-
+    print(f"Epoch: {epoch}\t{lapse:.1f}s\ttrain loss: {train_losses:.3f}\tval loss: {test_losses:.3f}\ttrain best loss: {best_train_loss:.3f}\tval best loss: {best_val_loss:.3f}")
