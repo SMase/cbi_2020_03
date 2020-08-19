@@ -6,7 +6,6 @@ import torch
 import os
 import argparse
 import time
-import pandas as pd
 from torch.utils.data import DataLoader                                     
 from dataset import MolDataset, collate_fn
 now = time.localtime()
@@ -116,7 +115,7 @@ for epoch in range(num_epochs):
     test_pred = []
     
     model.train()
-    for i_batch, sample in enumerate(train_dataloader):
+    for sample in train_dataloader:
         model.zero_grad()
         H, A1, A2, Y, V, keys, _ = sample 
         H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device),\
@@ -135,7 +134,7 @@ for epoch in range(num_epochs):
         train_pred.append(pred.data.cpu().numpy())
     
     model.eval()
-    for i_batch, sample in enumerate(test_dataloader):
+    for sample in test_dataloader:
         model.zero_grad()
         H, A1, A2, Y, V, keys, _ = sample 
         H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device),\

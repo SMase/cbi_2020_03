@@ -69,7 +69,7 @@ class MolDataset(Dataset):
         n1 = m1.GetNumAtoms()
         c1 = m1.GetConformers()[0]
         d1 = np.array(c1.GetPositions())
-        adj1 = GetAdjacencyMatrix(m1)+np.eye(n1)
+        # adj1 = GetAdjacencyMatrix(m1)+np.eye(n1)
         H1 = get_atom_feature(m1, True)
 
         dis1 = Get3DDistanceMatrix(m1)
@@ -79,7 +79,7 @@ class MolDataset(Dataset):
         n2 = m2.GetNumAtoms()
         c2 = m2.GetConformers()[0]
         d2 = np.array(c2.GetPositions())
-        adj2 = GetAdjacencyMatrix(m2)+np.eye(n2)
+        # adj2 = GetAdjacencyMatrix(m2)+np.eye(n2)
         H2 = get_atom_feature(m2, False)
         
         dis2 = Get3DDistanceMatrix(m2)
@@ -87,15 +87,14 @@ class MolDataset(Dataset):
 
         #aggregation
         H = np.concatenate([H1, H2], 0)
-        agg_adj1 = np.zeros((n1+n2, n1+n2))
-        agg_adj1[:n1, :n1] = adj1
-        agg_adj1[n1:, n1:] = adj2
-        agg_adj2 = np.copy(agg_adj1)
-        dm = distance_matrix(d1,d2)
-        agg_adj2[:n1,n1:] = np.copy(dm)
-        agg_adj2[n1:,:n1] = np.copy(np.transpose(dm))
+        # agg_adj1 = np.zeros((n1+n2, n1+n2))
+        # agg_adj1[:n1, :n1] = adj1
+        # agg_adj1[n1:, n1:] = adj2
+        # agg_adj2 = np.copy(agg_adj1)
+        dm = distance_matrix(d1, d2)
+        # agg_adj2[:n1,n1:] = np.copy(dm)
+        # agg_adj2[n1:,:n1] = np.copy(np.transpose(dm))
 
-        _tmp = (dm < 4.0).astype(int)
         agg_Adj1 = np.zeros((n1+n2, n1+n2))
         agg_Adj1[:n1, :n1] = Adj1
         agg_Adj1[n1:, n1:] = Adj2
