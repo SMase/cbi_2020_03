@@ -12,8 +12,8 @@ from rdkit.Chem import ChemicalFeatures
 #from rdkit.Contrib.SA_Score.sascorer
 #import deepchem as dc
 
-#N_atom_features = 28
-N_atom_features = 21
+# N_atom_features = 21
+N_atom_features = 28
 
 
 def set_cuda_visible_device(ngpus):

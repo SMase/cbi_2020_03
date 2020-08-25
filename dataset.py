@@ -13,6 +13,9 @@ import pickle
 
 random.seed(0)
 
+# N_atom_features = 28
+N_atom_features = 21
+
 def get_atom_feature(m, is_ligand=True):
     x = utils.get_atom_types(m)
     n = m.GetNumAtoms()
@@ -21,9 +24,9 @@ def get_atom_feature(m, is_ligand=True):
         H.append(x[i])
     H = np.array(H)        
     if is_ligand:
-        H = np.concatenate([H, np.zeros((n,21))], 1)
+        H = np.concatenate([H, np.zeros((n, N_atom_features))], 1)
     else:
-        H = np.concatenate([np.zeros((n,21)), H], 1)
+        H = np.concatenate([np.zeros((n, N_atom_features)), H], 1)
     return H        
 
 """
@@ -34,17 +37,86 @@ def get_atom_feature(m, is_ligand=True):
         H.append(utils.atom_feature(m, i))
     H = np.array(H)        
     if is_ligand:
-        H = np.concatenate([H, np.zeros((n,28))], 1)
+        H = np.concatenate([H, np.zeros((n, N_atom_features))], 1)
     else:
-        H = np.concatenate([np.zeros((n,28)), H], 1)
+        H = np.concatenate([np.zeros((n, N_atom_features)), H], 1)
     return H        
 """
 
+"""
 class MolDataset(Dataset):
-
     def __init__(self, keys, pKd, data_dir):
         self.data_dir = data_dir
-        # self.data_df = pd.read_csv('data.csv')
+        self.keys, self.pKd = self.check_data(keys, pKd)
+
+    def __len__(self):
+        return len(self.keys)
+
+    def __getitem__(self, idx):
+        key = self.keys[idx]
+
+        pocket_fname = self.data_dir + '/' + key + '/' + key + '_pocket.pdb'
+        for f in os.listdir(self.data_dir + '/' + key):
+            if f.endswith('.sdf'):
+                ligand_name = f[:3]
+                ligand_fname = self.data_dir + '/' + key + '/' + ligand_name + '.sdf'
+                break
+        for m1 in Chem.SDMolSupplier(ligand_fname): break
+        m2 = Chem.MolFromPDBFile(pocket_fname)
+
+        #prepare ligand
+        n1 = m1.GetNumAtoms()
+        c1 = m1.GetConformers()[0]
+        d1 = np.array(c1.GetPositions())
+        adj1 = GetAdjacencyMatrix(m1)+np.eye(n1)
+        H1 = get_atom_feature(m1, True)
+
+        #prepare protein
+        n2 = m2.GetNumAtoms()
+        c2 = m2.GetConformers()[0]
+        d2 = np.array(c2.GetPositions())
+        adj2 = GetAdjacencyMatrix(m2)+np.eye(n2)
+        H2 = get_atom_feature(m2, False)
+
+        #aggregation
+        H = np.concatenate([H1, H2], 0)
+        agg_adj1 = np.zeros((n1+n2, n1+n2))
+        agg_adj1[:n1, :n1] = adj1
+        agg_adj1[n1:, n1:] = adj2
+        agg_adj2 = np.copy(agg_adj1)
+        dm = distance_matrix(d1,d2)
+        agg_adj2[:n1,n1:] = np.copy(dm)
+        agg_adj2[n1:,:n1] = np.copy(np.transpose(dm))
+
+        #node indice for aggregation
+        valid = np.zeros((n1+n2,))
+        valid[:n1] = 1
+
+        Y = self.pKd[idx]
+
+        sample = {
+                  'H':H, \
+                  'A1': agg_adj1, \
+                  'A2': agg_adj2, \
+                  'Y': Y, \
+                  'V': valid, \
+                  'key': key, \
+                  }
+
+        return sample
+
+    def check_data(self, keys, val):
+        checked_pdb = []
+        checked_pKd = []
+        for pdb, pkd in zip(keys, val):
+            checked_pdb.append(pdb)
+            checked_pKd.append(pkd)
+        return checked_pdb, checked_pKd
+"""
+
+class MolDataset(Dataset):
+    def __init__(self, keys, pKd, data_dir):
+        self.data_dir = data_dir
         self.keys, self.pKd = self.check_data(keys, pKd)
 
     def __len__(self):
@@ -69,7 +141,6 @@ class MolDataset(Dataset):
         n1 = m1.GetNumAtoms()
         c1 = m1.GetConformers()[0]
         d1 = np.array(c1.GetPositions())
-        # adj1 = GetAdjacencyMatrix(m1)+np.eye(n1)
         H1 = get_atom_feature(m1, True)
 
         dis1 = Get3DDistanceMatrix(m1)
@@ -79,7 +150,6 @@ class MolDataset(Dataset):
         n2 = m2.GetNumAtoms()
         c2 = m2.GetConformers()[0]
         d2 = np.array(c2.GetPositions())
-        # adj2 = GetAdjacencyMatrix(m2)+np.eye(n2)
         H2 = get_atom_feature(m2, False)
         
         dis2 = Get3DDistanceMatrix(m2)
@@ -87,13 +157,7 @@ class MolDataset(Dataset):
 
         #aggregation
         H = np.concatenate([H1, H2], 0)
-        # agg_adj1 = np.zeros((n1+n2, n1+n2))
-        # agg_adj1[:n1, :n1] = adj1
-        # agg_adj1[n1:, n1:] = adj2
-        # agg_adj2 = np.copy(agg_adj1)
         dm = distance_matrix(d1, d2)
-        # agg_adj2[:n1,n1:] = np.copy(dm)
-        # agg_adj2[n1:,:n1] = np.copy(np.transpose(dm))
 
         agg_Adj1 = np.zeros((n1+n2, n1+n2))
         agg_Adj1[:n1, :n1] = Adj1
@@ -111,13 +175,6 @@ class MolDataset(Dataset):
 
         Y = self.pKd[idx]
 
-        #Y = float(np.loadtxt(self.data_dir+'/{0}/value'.format(key)))
-        #Y = self.data_df[self.data_df['pdbid'] == key]['pvalue'].values[0]
-        
-        #pIC50 to class
-        # Y = 1 if 'CHEMBL' in key else 0
-
-        #if n1+n2 > 300 : return None
         sample = {
                   'H':H, \
                   'A1': agg_Adj1, \
@@ -133,16 +190,6 @@ class MolDataset(Dataset):
         checked_pdb = []
         checked_pKd = []
         for pdb, pkd in zip(keys, val):
-            #chk_dir = os.path.join(self.data_dir, pdb)
-            #if not os.path.isdir(chk_dir):
-            #    print('Warnings: There is no directory. ({})'.format(chk_dir))
-            #    continue
-            #chk_file = os.path.join(self.data_dir, pdb, "{0}.pair.pkl".format(pdb))
-            ## chk_file = os.path.join(self.data_dir, '{0}_pair.pkl'.format(pdb))
-            #if not os.path.isfile(chk_file):
-            #    print('Warnings: There is no file. ({})'.format(chk_file))
-            #    continue
-
             checked_pdb.append(pdb)
             checked_pKd.append(pkd)
         return checked_pdb, checked_pKd
@@ -156,7 +203,6 @@ class DTISampler(Sampler):
         self.replacement = replacement
     
     def __iter__(self):
-        #return iter(torch.multinomial(self.weights, self.num_samples, self.replacement).tolist())
         retval = np.random.choice(len(self.weights), self.num_samples, replace=self.replacement, p=self.weights) 
         return iter(retval.tolist())
 
@@ -166,8 +212,7 @@ class DTISampler(Sampler):
 def collate_fn(batch):
     max_natoms = max([len(item['H']) for item in batch if item is not None])
     
-    #H = np.zeros((len(batch), max_natoms, 56))
-    H = np.zeros((len(batch), max_natoms, 42))
+    H = np.zeros((len(batch), max_natoms, 2*N_atom_features))
     A1 = np.zeros((len(batch), max_natoms, max_natoms))
     A2 = np.zeros((len(batch), max_natoms, max_natoms))
     Y = np.zeros((len(batch),))
