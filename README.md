@@ -9,7 +9,8 @@ https://github.com/jaechanglim/GNN_DTI
 # Instruction
 
 ```
-tar jxvf bidata_gnn_dti.tar.bz2
+(Download cbidata_gnn_dti.tar.bz2 from https://drive.google.com/drive/u/0/folders/1q9YtZTTYr1ZI9Vu9ddunT2Gl16Pmy4S9)
+tar jxvf cbidata_gnn_dti.tar.bz2
 mkdir -p cbidata
 mv 2018/* select/* cbidata/
 rm -rf 2018 select
