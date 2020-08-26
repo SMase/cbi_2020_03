@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch
 import os, argparse, time, shutil
 from torch.utils.data import DataLoader                                     
-from dataset import MolDataset, collate_fn
+from dataset2 import MolDataset, collate_fn
 
 now = time.localtime()
 s = "%04d-%02d-%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)

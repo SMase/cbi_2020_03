@@ -1,5 +1,5 @@
 import torch
-from dataset import MolDataset, collate_fn, DTISampler
+from dataset2 import MolDataset, collate_fn, DTISampler
 from torch.utils.data import DataLoader
 from easydict import EasyDict as edict
 import numpy as np
