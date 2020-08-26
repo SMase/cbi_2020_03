@@ -15,7 +15,7 @@ mkdir -p cbidata
 mv 2018/* select/* cbidata/
 rm -rf 2018 select
 
-python train.py --dropout_rate=0.3 --epoch=1000 --ngpu=0 --batch_size=256 --num_workers=0 --train_keys keys/keys_select --test_keys keys/keys_2018 --data_fpath cbidata
-python test.py --save_dir save/ --data_fpath cbidata --test_keys keys/keys_2018 --ngpu=0
+python train.py -l 0.001 -D 0.3 -E 1000 -g 0 -B 256 -v 2 -d cbidata -T keys/keys_select -t keys/keys_2018
+python test.py -l 0.001 -g 0 -v 2 -d cbidata -t keys/keys_2018 -S save/
 ```
 
