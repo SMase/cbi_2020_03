@@ -25,7 +25,6 @@ def yyplot(y_obs, y_pred):
     plt.savefig('figure.png')
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--lr", '-l', help="learning rate", type=float, default=0.0001)
 parser.add_argument("--ngpu", '-g', help="number of gpu", type=int, default=1)
 parser.add_argument("--batch_size", help="batch_size", type=int, default=8)
 parser.add_argument("--num_workers", help="number of workers", type=int, default=7)
@@ -39,7 +38,7 @@ parser.add_argument("--initial_mu", help="initial value of mu", type=float, defa
 parser.add_argument("--initial_dev", help="initial value of dev", type=float, default=0.19818493842903845)
 parser.add_argument("--dropout_rate", help="dropout_rate", type=float, default=0.3)
 parser.add_argument("--test_keys", '-t', help="test keys", type=str, default='keys/test_keys.txt')
-parser.add_argument("--map_path", help="savepath for saliency map", type=str, default='png/')
+parser.add_argument("--map_path", '-P', help="savepath for saliency map", type=str, default='')
 parser.add_argument("--map_th_max", help="max th value for saliency map", type=int, default=20)
 parser.add_argument("--map_th_min", help="min th value for saliency map", type=int, default=-20)
 parser.add_argument('--dataset_version', '-v', help='dataset version', type=int, default=2)
@@ -133,4 +132,5 @@ df = pd.DataFrame({
 df.round(3).to_csv("result.tsv", sep="\t")
 
 v_grad = VanillaGrad(th_max=args.map_th_max, th_min=args.map_th_min)
-v_grad.save_saliency_map(args, n_atom_list, saliency_list, pdb_list)
+if args.map_path != '':
+    v_grad.save_saliency_map(args, n_atom_list, saliency_list, pdb_list)
