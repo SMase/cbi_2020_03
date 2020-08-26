@@ -1,13 +1,12 @@
+import torch
 from torch.utils.data import Dataset
 from torch.utils.data.sampler import Sampler
-import os, random, pickle
-import utils
-import numpy as np
-import torch
-
-from rdkit import Chem
 from scipy.spatial import distance_matrix
 from rdkit.Chem.rdmolops import GetAdjacencyMatrix, Get3DDistanceMatrix
+import numpy as np
+import os, random, pickle
+from rdkit import Chem
+import utils
 
 random.seed(0)
 

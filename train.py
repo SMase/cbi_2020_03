@@ -1,11 +1,11 @@
 from gnn import gnn
-import numpy as np
-import utils
 import torch.nn as nn
 import torch
-import os, argparse, time, shutil
 from torch.utils.data import DataLoader                                     
-from dataset2 import MolDataset, collate_fn
+import numpy as np
+import os, argparse, time, shutil
+import utils
+import dataset2 as ds
 
 now = time.localtime()
 s = "%04d-%02d-%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
@@ -76,16 +76,16 @@ if 0 < args.ngpu:
     print(f'CUDA available: {torch.cuda.is_available()} {device}')
 
 
-train_dataset = MolDataset(train_keys, train_pkd, args.data_fpath)
-test_dataset = MolDataset(test_keys, test_pkd, args.data_fpath)
+train_dataset = ds.MolDataset(train_keys, train_pkd, args.data_fpath)
+test_dataset = ds.MolDataset(test_keys, test_pkd, args.data_fpath)
 
 N_atom_features = train_dataset[0]['H'].shape[1]//2
 args.N_atom_features = N_atom_features
 
 train_dataloader = DataLoader(train_dataset, args.batch_size, \
-     shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
+     shuffle=False, num_workers=args.num_workers, collate_fn=ds.collate_fn)
 test_dataloader = DataLoader(test_dataset, args.batch_size, \
-     shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
+     shuffle=False, num_workers=args.num_workers, collate_fn=ds.collate_fn)
 
 model = gnn(args)
 print ('number of parameters : ', sum(p.numel() for p in model.parameters() if p.requires_grad))

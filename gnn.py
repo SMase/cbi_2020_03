@@ -1,9 +1,6 @@
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from utils import *
-import time
-from multiprocessing import Pool
 from layers import GAT_gate
 
 class gnn(torch.nn.Module):

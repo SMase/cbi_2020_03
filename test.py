@@ -1,18 +1,15 @@
 import torch
-from dataset2 import MolDataset, collate_fn, DTISampler
 from torch.utils.data import DataLoader
 from easydict import EasyDict as edict
 import numpy as np
 from gnn import gnn
 from scipy import stats
-import pandas as pd
-import argparse
-import itertools
-
-from saliency import VanillaGrad
-
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import pandas as pd
+import argparse, itertools
+import dataset2 as ds
+from saliency import VanillaGrad
 
 def yyplot(y_obs, y_pred):
     yvalues = np.concatenate([y_obs.flatten(), y_pred.flatten()])
@@ -67,7 +64,7 @@ for line in open(args.test_keys):
     test_pkd.append(value)
 
 dataset_path = args.data_fpath
-test_dataset = MolDataset(test_keys, test_pkd, dataset_path)
+test_dataset = ds.MolDataset(test_keys, test_pkd, dataset_path)
 
 N_atom_features = test_dataset[0]['H'].shape[1]//2
 args.N_atom_features = N_atom_features
@@ -78,7 +75,7 @@ model_path = args.save_dir + "model_weights.pt"
 model = gnn(prm)
 model.load_state_dict(torch.load(model_path))
 
-test_dataloader = DataLoader(test_dataset, 10, shuffle=True, num_workers=10, collate_fn=collate_fn)
+test_dataloader = DataLoader(test_dataset, 10, shuffle=True, num_workers=10, collate_fn=ds.collate_fn)
 
 test_true = []
 test_pred = []
