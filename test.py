@@ -58,10 +58,6 @@ prm["dropout_rate"] = args.dropout_rate
 prm["initial_mu"] = args.initial_mu
 prm["initial_dev"] = args.initial_dev
 
-model_path = args.save_dir + "model_weights.pt"
-model = gnn(prm)
-model.load_state_dict(torch.load(model_path))
-
 test_keys = []
 test_pkd = []
 for line in open(args.test_keys):
@@ -72,6 +68,15 @@ for line in open(args.test_keys):
 
 dataset_path = args.data_fpath
 test_dataset = MolDataset(test_keys, test_pkd, dataset_path)
+
+N_atom_features = test_dataset[0]['H'].shape[1]//2
+args.N_atom_features = N_atom_features
+
+prm['N_atom_features'] = args.N_atom_features
+
+model_path = args.save_dir + "model_weights.pt"
+model = gnn(prm)
+model.load_state_dict(torch.load(model_path))
 
 test_dataloader = DataLoader(test_dataset, 10, shuffle=True, num_workers=10, collate_fn=collate_fn)
 

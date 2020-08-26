@@ -3,10 +3,7 @@ import numpy as np
 import utils
 import torch.nn as nn
 import torch
-import os
-import argparse
-import time
-import shutil
+import os, argparse, time, shutil
 from torch.utils.data import DataLoader                                     
 from dataset import MolDataset, collate_fn
 
@@ -76,21 +73,24 @@ print(f'Number of test data: {len(test_keys)}')
 device = "cpu"
 if 0 < args.ngpu:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f'CUDA available: {torch.cuda.is_available()} {divice}')
+    print(f'CUDA available: {torch.cuda.is_available()} {device}')
 
-
-model = gnn(args)
-print ('number of parameters : ', sum(p.numel() for p in model.parameters() if p.requires_grad))
-
-model = utils.initialize_model(model, device)
 
 train_dataset = MolDataset(train_keys, train_pkd, args.data_fpath)
 test_dataset = MolDataset(test_keys, test_pkd, args.data_fpath)
+
+N_atom_features = train_dataset[0]['H'].shape[1]//2
+args.N_atom_features = N_atom_features
 
 train_dataloader = DataLoader(train_dataset, args.batch_size, \
      shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
 test_dataloader = DataLoader(test_dataset, args.batch_size, \
      shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
+
+model = gnn(args)
+print ('number of parameters : ', sum(p.numel() for p in model.parameters() if p.requires_grad))
+
+model = utils.initialize_model(model, device)
 
 #optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)

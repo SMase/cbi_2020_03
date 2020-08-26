@@ -6,12 +6,10 @@ import time
 from multiprocessing import Pool
 from layers import GAT_gate
 
-# N_atom_features = 28
-N_atom_features = 21
-
 class gnn(torch.nn.Module):
     def __init__(self, args):
         super(gnn, self).__init__()
+        N_atom_features = args.N_atom_features
         n_graph_layer = args.n_graph_layer
         d_graph_layer = args.d_graph_layer
         n_FC_layer = args.n_FC_layer
