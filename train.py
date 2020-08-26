@@ -6,6 +6,7 @@ import torch
 import os
 import argparse
 import time
+import shutil
 from torch.utils.data import DataLoader                                     
 from dataset import MolDataset, collate_fn
 now = time.localtime()
@@ -29,6 +30,7 @@ parser.add_argument("--initial_dev", help="initial value of dev", type=float, de
 parser.add_argument("--dropout_rate", help="dropout_rate", type=float, default=0.3)
 parser.add_argument("--train_keys", help="train keys", type=str, default='keys/train_keys.txt')
 parser.add_argument("--test_keys", help="test keys", type=str, default='keys/val_keys.txt')
+parser.add_argument('--clear_cache', help='clear cache directory', action='store_true')
 args = parser.parse_args()
 print(args)
 
@@ -39,6 +41,9 @@ ngpu = args.ngpu
 batch_size = args.batch_size
 data_fpath = args.data_fpath
 save_dir = args.save_dir
+
+if args.clear_cache:
+    shutil.rmtree('/tmp/moldata')
 
 # make save dir if it doesn't exist
 if not os.path.isdir(save_dir):

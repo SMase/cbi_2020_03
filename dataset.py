@@ -118,12 +118,23 @@ class MolDataset(Dataset):
     def __init__(self, keys, pKd, data_dir):
         self.data_dir = data_dir
         self.keys, self.pKd = self.check_data(keys, pKd)
+        self.cachedir = '/tmp/moldata'
+        os.makedirs(self.cachedir, exist_ok=True)
 
     def __len__(self):
         return len(self.keys)
 
     def __getitem__(self, idx):
+        """
+        caching mechanism is added
+        """
         key = self.keys[idx]
+        keyfname = f'{self.cachedir}/{key}.pkl'
+        if os.path.exists(keyfname):
+            sample = pickle.load(open(keyfname, 'rb'))
+            return sample
+
+        print(key, '... caching')
 
         pocket_fname = self.data_dir + '/' + key + '/' + key + '_pocket.pdb'
         for f in os.listdir(self.data_dir + '/' + key):
@@ -184,6 +195,7 @@ class MolDataset(Dataset):
                   'key': key, \
                   }
 
+        pickle.dump(sample, open(keyfname, 'wb'), protocol=4)
         return sample
 
     def check_data(self, keys, val):
