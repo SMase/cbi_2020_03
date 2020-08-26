@@ -9,6 +9,7 @@ import time
 import shutil
 from torch.utils.data import DataLoader                                     
 from dataset import MolDataset, collate_fn
+
 now = time.localtime()
 s = "%04d-%02d-%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
 print(s)
@@ -73,20 +74,15 @@ print(f'Number of test data: {len(test_keys)}')
 
 # initialize model
 device = "cpu"
-if args.ngpu>0:
+if 0 < args.ngpu:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    cmd = utils.set_cuda_visible_device(args.ngpu)
-    os.environ['CUDA_VISIBLE_DEVICES']=cmd[:-1]
+    print(f'CUDA available: {torch.cuda.is_available()} {divice}')
 
 
 model = gnn(args)
 print ('number of parameters : ', sum(p.numel() for p in model.parameters() if p.requires_grad))
 
 model = utils.initialize_model(model, device)
-
-# train and test dataset
-#train_dataset = MolDataset(train_keys, train_pkd, args.data_fpath, args.distance)
-#test_dataset = MolDataset(test_keys, test_pkd, args.data_fpath, args.distance)
 
 train_dataset = MolDataset(train_keys, train_pkd, args.data_fpath)
 test_dataset = MolDataset(test_keys, test_pkd, args.data_fpath)
@@ -123,8 +119,7 @@ for epoch in range(num_epochs):
     for sample in train_dataloader:
         model.zero_grad()
         H, A1, A2, Y, V, keys, _ = sample 
-        H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device),\
-                            Y.to(device), V.to(device)
+        H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device), Y.to(device), V.to(device)
         
         #train neural network
         pred = model.train_model((H, A1, A2, V))
@@ -142,8 +137,7 @@ for epoch in range(num_epochs):
     for sample in test_dataloader:
         model.zero_grad()
         H, A1, A2, Y, V, keys, _ = sample 
-        H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device),\
-                          Y.to(device), V.to(device)
+        H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device), Y.to(device), V.to(device)
         
         #train neural network
         pred = model.train_model((H, A1, A2, V))

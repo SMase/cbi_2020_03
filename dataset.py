@@ -13,7 +13,6 @@ import pickle
 
 random.seed(0)
 
-# N_atom_features = 28
 N_atom_features = 21
 
 def get_atom_feature(m, is_ligand=True):
@@ -30,6 +29,8 @@ def get_atom_feature(m, is_ligand=True):
     return H        
 
 """
+N_atom_features = 28
+
 def get_atom_feature(m, is_ligand=True):
     n = m.GetNumAtoms()
     H = []
@@ -43,76 +44,6 @@ def get_atom_feature(m, is_ligand=True):
     return H        
 """
 
-"""
-class MolDataset(Dataset):
-    def __init__(self, keys, pKd, data_dir):
-        self.data_dir = data_dir
-        self.keys, self.pKd = self.check_data(keys, pKd)
-
-    def __len__(self):
-        return len(self.keys)
-
-    def __getitem__(self, idx):
-        key = self.keys[idx]
-
-        pocket_fname = self.data_dir + '/' + key + '/' + key + '_pocket.pdb'
-        for f in os.listdir(self.data_dir + '/' + key):
-            if f.endswith('.sdf'):
-                ligand_name = f[:3]
-                ligand_fname = self.data_dir + '/' + key + '/' + ligand_name + '.sdf'
-                break
-        for m1 in Chem.SDMolSupplier(ligand_fname): break
-        m2 = Chem.MolFromPDBFile(pocket_fname)
-
-        #prepare ligand
-        n1 = m1.GetNumAtoms()
-        c1 = m1.GetConformers()[0]
-        d1 = np.array(c1.GetPositions())
-        adj1 = GetAdjacencyMatrix(m1)+np.eye(n1)
-        H1 = get_atom_feature(m1, True)
-
-        #prepare protein
-        n2 = m2.GetNumAtoms()
-        c2 = m2.GetConformers()[0]
-        d2 = np.array(c2.GetPositions())
-        adj2 = GetAdjacencyMatrix(m2)+np.eye(n2)
-        H2 = get_atom_feature(m2, False)
-
-        #aggregation
-        H = np.concatenate([H1, H2], 0)
-        agg_adj1 = np.zeros((n1+n2, n1+n2))
-        agg_adj1[:n1, :n1] = adj1
-        agg_adj1[n1:, n1:] = adj2
-        agg_adj2 = np.copy(agg_adj1)
-        dm = distance_matrix(d1,d2)
-        agg_adj2[:n1,n1:] = np.copy(dm)
-        agg_adj2[n1:,:n1] = np.copy(np.transpose(dm))
-
-        #node indice for aggregation
-        valid = np.zeros((n1+n2,))
-        valid[:n1] = 1
-
-        Y = self.pKd[idx]
-
-        sample = {
-                  'H':H, \
-                  'A1': agg_adj1, \
-                  'A2': agg_adj2, \
-                  'Y': Y, \
-                  'V': valid, \
-                  'key': key, \
-                  }
-
-        return sample
-
-    def check_data(self, keys, val):
-        checked_pdb = []
-        checked_pKd = []
-        for pdb, pkd in zip(keys, val):
-            checked_pdb.append(pdb)
-            checked_pKd.append(pkd)
-        return checked_pdb, checked_pKd
-"""
 
 class MolDataset(Dataset):
     def __init__(self, keys, pKd, data_dir):
@@ -206,6 +137,78 @@ class MolDataset(Dataset):
             checked_pKd.append(pkd)
         return checked_pdb, checked_pKd
 
+"""
+class MolDataset(Dataset):
+    def __init__(self, keys, pKd, data_dir):
+        self.data_dir = data_dir
+        self.keys, self.pKd = self.check_data(keys, pKd)
+
+    def __len__(self):
+        return len(self.keys)
+
+    def __getitem__(self, idx):
+        key = self.keys[idx]
+
+        pocket_fname = self.data_dir + '/' + key + '/' + key + '_pocket.pdb'
+        for f in os.listdir(self.data_dir + '/' + key):
+            if f.endswith('.sdf'):
+                ligand_name = f[:3]
+                ligand_fname = self.data_dir + '/' + key + '/' + ligand_name + '.sdf'
+                break
+        for m1 in Chem.SDMolSupplier(ligand_fname): break
+        m2 = Chem.MolFromPDBFile(pocket_fname)
+
+        #prepare ligand
+        n1 = m1.GetNumAtoms()
+        c1 = m1.GetConformers()[0]
+        d1 = np.array(c1.GetPositions())
+        adj1 = GetAdjacencyMatrix(m1)+np.eye(n1)
+        H1 = get_atom_feature(m1, True)
+
+        #prepare protein
+        n2 = m2.GetNumAtoms()
+        c2 = m2.GetConformers()[0]
+        d2 = np.array(c2.GetPositions())
+        adj2 = GetAdjacencyMatrix(m2)+np.eye(n2)
+        H2 = get_atom_feature(m2, False)
+
+        #aggregation
+        H = np.concatenate([H1, H2], 0)
+        agg_adj1 = np.zeros((n1+n2, n1+n2))
+        agg_adj1[:n1, :n1] = adj1
+        agg_adj1[n1:, n1:] = adj2
+        agg_adj2 = np.copy(agg_adj1)
+        dm = distance_matrix(d1,d2)
+        agg_adj2[:n1,n1:] = np.copy(dm)
+        agg_adj2[n1:,:n1] = np.copy(np.transpose(dm))
+
+        #node indice for aggregation
+        valid = np.zeros((n1+n2,))
+        valid[:n1] = 1
+
+        Y = self.pKd[idx]
+
+        sample = {
+                  'H':H, \
+                  'A1': agg_adj1, \
+                  'A2': agg_adj2, \
+                  'Y': Y, \
+                  'V': valid, \
+                  'key': key, \
+                  }
+
+        return sample
+
+    def check_data(self, keys, val):
+        checked_pdb = []
+        checked_pKd = []
+        for pdb, pkd in zip(keys, val):
+            checked_pdb.append(pdb)
+            checked_pKd.append(pkd)
+        return checked_pdb, checked_pKd
+"""
+
+
 class DTISampler(Sampler):
 
     def __init__(self, weights, num_samples, replacement=True):
@@ -220,6 +223,7 @@ class DTISampler(Sampler):
 
     def __len__(self):
         return self.num_samples
+
 
 def collate_fn(batch):
     max_natoms = max([len(item['H']) for item in batch if item is not None])
