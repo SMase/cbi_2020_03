@@ -2,7 +2,7 @@ import utils
 from rdkit import Chem
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
-import argparse, time, pickle, os, gzip
+import argparse, time, pickle, os, gzip, sys
 import multiprocessing as mp
 
 class Timer:
@@ -30,7 +30,6 @@ def get_distance_matrix(mol1, mol2):
     c2 = np.tile(coords2.T, n1).T.reshape(n1, n2, 3)
     return np.linalg.norm(c1-c2, axis=2)
 
-"""
 def get_A(ligand, pocket, n_atom_features, max_ligand_size, max_pocket_size):
     ligand_atom_types = utils.get_atom_types(ligand)
     pocket_atom_types = utils.get_atom_types(pocket)
@@ -47,8 +46,8 @@ def get_A(ligand, pocket, n_atom_features, max_ligand_size, max_pocket_size):
     A = np.concatenate((A1, A2), axis=0)
 
     return A
-"""
 
+"""
 def get_A(ligand, pocket, n_atom_features, max_ligand_size, max_pocket_size):
     M = ligand.GetNumAtoms()
     N = pocket.GetNumAtoms()
@@ -74,7 +73,7 @@ def get_A(ligand, pocket, n_atom_features, max_ligand_size, max_pocket_size):
     A = np.concatenate((A1, A2), axis=0)
 
     return A
-
+"""
 
 def get_D(ligand, pocket, thres, max_ligand_size, max_pocket_size):
     M = ligand.GetNumAtoms()
@@ -111,10 +110,10 @@ def worker(args):
     ligand = Chem.MolFromMolFile(f'cbidata/{pdb_code}/{ligand_name}.sdf')
     pocket = Chem.MolFromPDBFile(f'cbidata/{pdb_code}/{pdb_code}_pocket.pdb')
 
-    """
     A = get_A(ligand, pocket, 21, 60, 240)
     """
     A = get_A(ligand, pocket, 28, 60, 240)
+    """
     D = get_D(ligand, pocket, intermol_dist_thres, 60, 240)
 
     data = serialize(A, D)
@@ -160,32 +159,29 @@ def main(args):
     s = "%04d-%02d-%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
     print(s)
 
-    if not os.path.exists('zzz.pkl.gz'):
+    if args.cache:
+        print('Dataset is already calculated, so intermol_dist_thres option is not in effect.')
+        train_X, train_y, test_X, test_y = pickle.load(gzip.open('zzz.pkl.gz', 'rb'))
+    else:
         print('Dataset will be recalculated')
         train_X, train_y = load_data(args.train_keys, intermol_dist_thres=args.intermol_dist_thres)
         test_X, test_y = load_data(args.test_keys, intermol_dist_thres=args.intermol_dist_thres)
         d = train_X, train_y, test_X, test_y
         pickle.dump(d, gzip.open('zzz.pkl.gz', 'wb'), protocol=4)
-    else:
-        print('Dataset is already calculated, so intermol_dist_thres option is not in effect.')
-        train_X, train_y, test_X, test_y = pickle.load(gzip.open('zzz.pkl.gz', 'rb'))
-
-    print(train_X.shape)
-    print(train_y.shape)
-    print(test_X.shape)
-    print(test_y.shape)
 
     regr = RandomForestRegressor(random_state=0, verbose=2, n_jobs=-1).fit(train_X, train_y)
     print(regr.score(test_X, test_y))
+    return 0
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_keys", help="train keys", type=str, default='keys/train_keys.txt')
-    parser.add_argument("--test_keys", help="test keys", type=str, default='keys/val_keys.txt')
-    parser.add_argument("--data_fpath", help="file path of dude data", type=str, default='data_select/')
-    parser.add_argument('--intermol_dist_thres', help='intermol distance', type=float, default=4.0)
+    parser.add_argument("--train_keys", '-T', help="train keys", type=str, default='keys/train_keys.txt')
+    parser.add_argument("--test_keys", '-t', help="test keys", type=str, default='keys/val_keys.txt')
+    parser.add_argument("--data_fpath", '-p', help="file path of dude data", type=str, default='data_select/')
+    parser.add_argument('--intermol_dist_thres', '-i', help='intermol distance', type=float, default=4.0)
+    parser.add_argument('--cache', '-c', action='store_true')
     args = parser.parse_args()
     print(args)
 
-    main(args)
+    sys.exit(main(args))
