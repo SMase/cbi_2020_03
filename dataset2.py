@@ -75,14 +75,16 @@ class MolDataset(Dataset):
         H = np.concatenate([H1, H2], 0)
         dm = distance_matrix(d1, d2)
 
-        agg_Adj1 = np.zeros((n1+n2, n1+n2), dtype=int)
+        agg_Adj1 = np.zeros((n1+n2, n1+n2))
         agg_Adj1[:n1, :n1] = Adj1
         agg_Adj1[n1:, n1:] = Adj2
         agg_Adj2 = np.copy(agg_Adj1)
         dm = distance_matrix(d1, d2)
-        clo = (dm < 4.0).astype(int)
-        agg_Adj2[:n1,n1:] = clo
-        agg_Adj2[n1:,:n1] = clo.T
+        #clo = (dm < 4.0).astype(int)
+        #agg_Adj2[:n1,n1:] = clo
+        #agg_Adj2[n1:,:n1] = clo.T
+        agg_Adj2[:n1,n1:] = dm
+        agg_Adj2[n1:,:n1] = dm.T
 
         #node indice for aggregation
         valid = np.zeros((n1+n2,), dtype=int)
