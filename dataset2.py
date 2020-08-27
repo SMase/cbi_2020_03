@@ -57,9 +57,6 @@ class MolDataset(Dataset):
         for m1 in Chem.SDMolSupplier(ligand_fname): break
         m2 = Chem.MolFromPDBFile(pocket_fname)
 
-        # with open(self.data_dir+'{0}_pair.pkl'.format(key), 'rb') as f:
-        #     m1, m2 = pickle.load(f)
-
         #prepare ligand
         n1 = m1.GetNumAtoms()
         c1 = m1.GetConformers()[0]
@@ -97,6 +94,8 @@ class MolDataset(Dataset):
         valid[:n1] = 1
 
         Y = self.pKd[idx]
+
+        add_Adj1 = np.zeros((1, 1))
 
         sample = {
                   'H':H, \
@@ -138,7 +137,8 @@ def collate_fn(batch):
     max_natoms = max([len(item['H']) for item in batch if item is not None])
     
     H = np.zeros((len(batch), max_natoms, 2*N_atom_features))
-    A1 = np.zeros((len(batch), max_natoms, max_natoms))
+    # A1 = np.zeros((len(batch), max_natoms, max_natoms))
+    A1 = np.zeros((len(batch), 1, 1))
     A2 = np.zeros((len(batch), max_natoms, max_natoms))
     Y = np.zeros((len(batch),))
     V = np.zeros((len(batch), max_natoms))
@@ -149,7 +149,7 @@ def collate_fn(batch):
         natom = len(batch[i]['H'])
 
         H[i,:natom] = batch[i]['H']
-        A1[i,:natom,:natom] = batch[i]['A1']
+        # A1[i,:natom,:natom] = batch[i]['A1']
         A2[i,:natom,:natom] = batch[i]['A2']
         Y[i] = batch[i]['Y']
         V[i,:natom] = batch[i]['V']
