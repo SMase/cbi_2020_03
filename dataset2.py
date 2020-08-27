@@ -95,7 +95,7 @@ class MolDataset(Dataset):
 
         Y = self.pKd[idx]
 
-        add_Adj1 = np.zeros((1, 1))
+        agg_Adj1 = np.zeros((1, 1))
 
         sample = {
                   'H':H, \
