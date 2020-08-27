@@ -14,17 +14,13 @@ random.seed(0)
 N_atom_features = 21
 
 def get_atom_feature(m, is_ligand=True):
-    x = utils.get_atom_types(m)
     n = m.GetNumAtoms()
-    H = []
-    for i in range(n):
-        H.append(x[i])
-    H = np.array(H)        
+    H = np.array(utils.get_atom_types(m))
     if is_ligand:
-        H = np.concatenate([H, np.zeros((n, N_atom_features))], 1)
+        H = np.concatenate([H, np.zeros((n, N_atom_features), dtype=int)], 1)
     else:
-        H = np.concatenate([np.zeros((n, N_atom_features)), H], 1)
-    return H        
+        H = np.concatenate([np.zeros((n, N_atom_features), dtype=int), H], 1)
+    return H
 
 class MolDataset(Dataset):
     def __init__(self, keys, pKd, data_dir):
@@ -79,18 +75,17 @@ class MolDataset(Dataset):
         H = np.concatenate([H1, H2], 0)
         dm = distance_matrix(d1, d2)
 
-        agg_Adj1 = np.zeros((n1+n2, n1+n2))
+        agg_Adj1 = np.zeros((n1+n2, n1+n2), dtype=int)
         agg_Adj1[:n1, :n1] = Adj1
         agg_Adj1[n1:, n1:] = Adj2
         agg_Adj2 = np.copy(agg_Adj1)
         dm = distance_matrix(d1, d2)
         clo = (dm < 4.0).astype(int)
-        agg_Adj2[:n1, n1:] = clo
-        agg_Adj2[n1:, :n1] = clo.T
-        agg_Adj2 = agg_Adj2.astype(int)
+        agg_Adj2[:n1,n1:] = clo
+        agg_Adj2[n1:,:n1] = clo.T
 
         #node indice for aggregation
-        valid = np.zeros((n1+n2,))
+        valid = np.zeros((n1+n2,), dtype=int)
         valid[:n1] = 1
 
         Y = self.pKd[idx]
