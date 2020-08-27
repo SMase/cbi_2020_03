@@ -26,7 +26,7 @@ def yyplot(y_obs, y_pred):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ngpu", '-g', help="number of gpu", type=int, default=1)
-parser.add_argument("--batch_size", help="batch_size", type=int, default=8)
+parser.add_argument("--batch_size", '-B', help="batch_size", type=int, default=8)
 parser.add_argument("--num_workers", help="number of workers", type=int, default=7)
 parser.add_argument("--n_graph_layer", help="number of GNN layer", type=int, default=4)
 parser.add_argument("--d_graph_layer", help="dimension of GNN layer", type=int, default=140)
@@ -81,7 +81,7 @@ model_path = args.save_dir + "model_weights.pt"
 model = gnn(prm)
 model.load_state_dict(torch.load(model_path))
 
-test_dataloader = DataLoader(test_dataset, 10, shuffle=True, num_workers=10, collate_fn=ds.collate_fn)
+test_dataloader = DataLoader(test_dataset, 8, shuffle=True, num_workers=8, collate_fn=ds.collate_fn)
 
 test_true = []
 test_pred = []
