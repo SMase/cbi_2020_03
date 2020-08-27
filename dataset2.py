@@ -90,7 +90,7 @@ class MolDataset(Dataset):
 
         Y = self.pKd[idx]
 
-        agg_Adj1 = np.zeros((1, 1))
+        # agg_Adj1 = np.zeros((1, 1))
 
         sample = {
                   'H':H, \
@@ -132,8 +132,8 @@ def collate_fn(batch):
     max_natoms = max([len(item['H']) for item in batch if item is not None])
     
     H = np.zeros((len(batch), max_natoms, 2*N_atom_features))
-    # A1 = np.zeros((len(batch), max_natoms, max_natoms))
-    A1 = np.zeros((len(batch), 1, 1))
+    A1 = np.zeros((len(batch), max_natoms, max_natoms))
+    # A1 = np.zeros((len(batch), 1, 1))
     A2 = np.zeros((len(batch), max_natoms, max_natoms))
     Y = np.zeros((len(batch),))
     V = np.zeros((len(batch), max_natoms))
@@ -144,7 +144,7 @@ def collate_fn(batch):
         natom = len(batch[i]['H'])
 
         H[i,:natom] = batch[i]['H']
-        # A1[i,:natom,:natom] = batch[i]['A1']
+        A1[i,:natom,:natom] = batch[i]['A1']
         A2[i,:natom,:natom] = batch[i]['A2']
         Y[i] = batch[i]['Y']
         V[i,:natom] = batch[i]['V']

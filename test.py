@@ -36,7 +36,7 @@ parser.add_argument("--data_fpath", '-d', help="file path of dude data", type=st
 parser.add_argument("--save_dir", '-S', help="save directory of model parameter", type=str, default='./save/')
 parser.add_argument("--initial_mu", help="initial value of mu", type=float, default=4.461085466198279)
 parser.add_argument("--initial_dev", help="initial value of dev", type=float, default=0.19818493842903845)
-parser.add_argument("--dropout_rate", help="dropout_rate", type=float, default=0.3)
+parser.add_argument("--dropout_rate", '-D', help="dropout_rate", type=float, default=0.3)
 parser.add_argument("--test_keys", '-t', help="test keys", type=str, default='keys/test_keys.txt')
 parser.add_argument("--map_path", '-P', help="savepath for saliency map", type=str, default='')
 parser.add_argument("--map_th_max", help="max th value for saliency map", type=int, default=20)
