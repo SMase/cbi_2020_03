@@ -119,7 +119,8 @@ test_true = np.concatenate(np.array(test_true), 0)
 rmse = mean_squared_error(test_true, test_pred)**0.5
 mae = mean_absolute_error(test_true, test_pred)
 r2_p = stats.pearsonr(test_true, test_pred)
-print("rmse: {}\nmae: {}\nr2: {}".format(rmse, mae, r2_p[0]))
+spearman_r = stats.spearmanr(test_true, test_pred)
+print("rmse: {}\nmae: {}\nr2: {}\nrau: {}".format(rmse, mae, r2_p[0], spearman_r[0]))
 yyplot(test_true, test_pred)
 
 pdb_list = list(itertools.chain.from_iterable(test_label))
