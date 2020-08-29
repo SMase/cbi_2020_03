@@ -81,13 +81,21 @@ train_keys = []
 train_pkd = []
 test_keys = []
 test_pkd = []
-for i in range(len(all_data)):
-    if i % 7 == 6:
-        test_keys.append(all_data[i][0])
-        test_pkd.append(all_data[i][1])
+test2_keys = []
+test2_pkd = []
+count = 0
+for key, pkd in all_data:
+    if pkd < 2.75 or 9.25 < pkd:
+        test2_keys.append(key)
+        test2_pkd.append(pkd)
+        continue
+    count += 1
+    if count % 7 == 0:
+        test_keys.append(key)
+        test_pkd.append(pkd)
     else:
-        train_keys.append(all_data[i][0])
-        train_pkd.append(all_data[i][1])
+        train_keys.append(key)
+        train_pkd.append(pkd)
 
 with open('train.local.key', 'wt') as out:
     for key, pkd in zip(train_keys, train_pkd):
@@ -96,6 +104,11 @@ with open('train.local.key', 'wt') as out:
 with open('test.local.key', 'wt') as out:
     for key, pkd in zip(test_keys, test_pkd):
         print(key, pkd, sep='\t', file=out)
+
+with open('test2.local.key', 'wt') as out:
+    for key, pkd in zip(test2_keys, test2_pkd):
+        print(key, pkd, sep='\t', file=out)
+
 ###############
 ###############
 ###############
