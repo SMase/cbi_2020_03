@@ -16,6 +16,6 @@ mv 2018/* select/* cbidata/
 rm -rf 2018 select
 
 python train.py -l 0.001 -D 0.3 -E 1000 -g 0 -B 256 -v 2 -d cbidata -T keys/keys_select -t keys/keys_2018
-python test.py -g 0 -v 2 -d cbidata -S save/ -t keys/keys_2018
+python test.py -g 0 -v 2 -d cbidata -S save/ -t test.local.keys
 ```
 
