@@ -63,9 +63,17 @@ prm["initial_dev"] = args.initial_dev
 
 test_keys = []
 test_pkd = []
+### Original
+# for line in open(args.test_keys):
+#     it = line.rstrip().split('\t')
+#     pdb_code, ligand_name, year, value = it[0], it[1], int(it[2]), float(it[3])
+#     test_keys.append(pdb_code)
+#     test_pkd.append(value)
+
+### Stratifying
 for line in open(args.test_keys):
     it = line.rstrip().split('\t')
-    pdb_code, ligand_name, year, value = it[0], it[1], int(it[2]), float(it[3])
+    pdb_code, value = it[0], float(it[1])
     test_keys.append(pdb_code)
     test_pkd.append(value)
 

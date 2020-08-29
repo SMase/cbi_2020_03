@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch
 from torch.utils.data import DataLoader                                     
 import numpy as np
-import os, argparse, time, shutil
+import os, argparse, time, shutil, sys
 import utils
 
 now = time.localtime()
@@ -72,6 +72,34 @@ for line in open(args.test_keys):
     test_keys.append(pdb_code)
     test_pkd.append(value)
 
+###############
+### Stratifying
+###############
+all_data = sorted(zip(train_keys + test_keys, train_pkd + test_pkd), key=lambda x: x[1], reverse=True)
+
+train_keys = []
+train_pkd = []
+test_keys = []
+test_pkd = []
+for i in range(len(all_data)):
+    if i % 7 == 6:
+        test_keys.append(all_data[i][0])
+        test_pkd.append(all_data[i][1])
+    else:
+        train_keys.append(all_data[i][0])
+        train_pkd.append(all_data[i][1])
+
+with open('train.local.key', 'wt') as out:
+    for key, pkd in zip(train_keys, train_pkd):
+        print(key, pkd, sep='\t', file=out)
+
+with open('test.local.key', 'wt') as out:
+    for key, pkd in zip(test_keys, test_pkd):
+        print(key, pkd, sep='\t', file=out)
+###############
+###############
+###############
+
 # print simple statistics about dude data and pdbbind data
 print(f'Number of train data: {len(train_keys)}')
 print(f'Number of test data: {len(test_keys)}')
@@ -90,9 +118,9 @@ N_atom_features = train_dataset[0]['H'].shape[1]//2
 args.N_atom_features = N_atom_features
 
 train_dataloader = DataLoader(train_dataset, args.batch_size, \
-     shuffle=False, num_workers=args.num_workers, collate_fn=ds.collate_fn)
+     shuffle=True, num_workers=args.num_workers, collate_fn=ds.collate_fn)
 test_dataloader = DataLoader(test_dataset, args.batch_size, \
-     shuffle=False, num_workers=args.num_workers, collate_fn=ds.collate_fn)
+     shuffle=True, num_workers=args.num_workers, collate_fn=ds.collate_fn)
 
 model = gnn(args)
 print ('number of parameters : ', sum(p.numel() for p in model.parameters() if p.requires_grad))
