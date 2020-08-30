@@ -88,7 +88,7 @@ test2_pkd = []
 
 count = 0
 for key, pkd in all_data:
-    if pkd < 2 or 10 < pkd:
+    if pkd < 2:
         test2_keys.append(key)
         test2_pkd.append(pkd)
         continue
