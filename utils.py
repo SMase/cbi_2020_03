@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from rdkit import Chem, RDConfig
-from rdkit.Chem import ChemicalFeatures
 import os, time
 
 def initialize_model(model, device, load_save_file=False):

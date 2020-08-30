@@ -90,9 +90,9 @@ def main(args):
     test = read_keyfile(args.test_keys)
     train_keys, test_keys, test2_keys = filter_and_stratify(train, test)
 
-    write_keys(train_keys, 'train.local.keys')
-    write_keys(test_keys, 'test.local.keys')
-    write_keys(test2_keys, 'test2.local.keys')
+    write_keys(train_keys, 'train.local.key')
+    write_keys(test_keys, 'test.local.key')
+    write_keys(test2_keys, 'test2.local.key')
 
     print(f'Number of train data: {len(train_keys)}')
     print(f'Number of test data: {len(test_keys)}')

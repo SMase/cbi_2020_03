@@ -8,10 +8,19 @@ import torch
 from rdkit import Chem
 from scipy.spatial import distance_matrix
 from rdkit.Chem.rdmolops import GetAdjacencyMatrix, Get3DDistanceMatrix
+from rdkit import Chem, RDConfig
+from rdkit.Chem import ChemicalFeatures
 
 random.seed(0)
 
 N_atom_features = 21
+
+ARG_ANUM = {6:0, 7:1, 8:2, 9:3, 15:4, 16:5, 17:6, 35:7}
+ARG_HYB = {Chem.HybridizationType.SP3:10, Chem.HybridizationType.SP2:11, Chem.HybridizationType.SP:12}
+ARG_FEAT = {'Aro':9, 'Acc':14, 'Don':15, 'Hyd':16, 'Lum':17, 'Neg':18, 'Pos':19, 'ZnB':20}
+
+fdef_name = os.path.join(RDConfig.RDDataDir, 'BaseFeatures.fdef')
+factory = ChemicalFeatures.BuildFeatureFactory(fdef_name)
 
 def get_atom_types(mol):
     """
@@ -30,8 +39,6 @@ def get_atom_types(mol):
 
     21 dimension
     """
-    fdef_name = os.path.join(RDConfig.RDDataDir, 'BaseFeatures.fdef')
-    factory = ChemicalFeatures.BuildFeatureFactory(fdef_name)
     feats = factory.GetFeaturesForMol(mol)
     features = {}
     for sym in ['Acc', 'Don', 'Hyd', 'Lum', 'Neg', 'Pos', 'ZnB', 'Aro']:
@@ -43,59 +50,24 @@ def get_atom_types(mol):
     for k, v in features.items():
         for i in v:
             if i not in features_lb:
-                features_lb[i] = []
-            features_lb[i].append(k)
+                features_lb[i] = set()
+            features_lb[i].add(k)
 
     vecs = []
     for atom in mol.GetAtoms():
-        atom_feat = np.zeros(21, dtype=int)
+        atom_feat = np.zeros(N_atom_features, dtype=int)
         an = atom.GetAtomicNum()
-        if an == 6:
-            atom_feat[0] = 1
-        elif an == 7:
-            atom_feat[1] = 1
-        elif an == 8:
-            atom_feat[2] = 1
-        elif an == 9:
-            atom_feat[3] = 1
-        elif an == 15:
-            atom_feat[4] = 1
-        elif an == 16:
-            atom_feat[5] = 1
-        elif an == 17:
-            atom_feat[6] = 1
-        elif an == 35:
-            atom_feat[7] = 1
-        else:
-            atom_feat[8] = 1
+        atom_feat[ARG_ANUM.get(an, 8)] = 1
         hyb = atom.GetHybridization()
-        if hyb == Chem.HybridizationType.SP3:
-            atom_feat[10] = 1
-        elif hyb == Chem.HybridizationType.SP2:
-            atom_feat[11] = 1
-        elif hyb == Chem.HybridizationType.SP:
-            atom_feat[12] = 1
+        atom_feat[ARG_HYB.get(hyb)] = 1
         if atom.IsInRing():
             atom_feat[13] = 1
         idx = atom.GetIdx()
         if idx in features_lb:
             ff = features_lb[idx]
-            if 'Aro' in ff:
-                atom_feat[9] = 1
-            if 'Acc' in ff:
-                atom_feat[14] = 1
-            if 'Don' in ff:
-                atom_feat[15] = 1
-            if 'Hyd' in ff:
-                atom_feat[16] = 1
-            if 'Lum' in ff:
-                atom_feat[17] = 1
-            if 'Neg' in ff:
-                atom_feat[18] = 1
-            if 'Pos' in ff:
-                atom_feat[19] = 1
-            if 'ZnB' in ff:
-                atom_feat[20] = 1
+            for F in ARG_FEAT:
+                if F in ff:
+                    atom_feat[ARG_FEAT.get(F)] = 1
         vecs.append(atom_feat)
     vecs = np.array(vecs)
     return vecs
