@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader
 import numpy as np
 import os, argparse, time, shutil, sys
 import utils
+from rdkit import Chem
+from rdkit.Chem import QED
 
 now = time.localtime()
 s = "%04d-%02d-%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
@@ -83,14 +85,32 @@ test_keys = []
 test_pkd = []
 test2_keys = []
 test2_pkd = []
+
 count = 0
 for key, pkd in all_data:
-    if pkd < 2.75 or 9.25 < pkd:
+    sdf_found = False
+    for f in os.listdir(f'cbidata/{key}'):
+        if f.endswith('.sdf'):
+            sdf_found = True
+            sdf_fname = f'cbidata/{key}/{f}'
+            ligand_mol = Chem.MolFromMolFile(sdf_fname)
+            break
+    if not sdf_found:
+        continue
+
+    n_atoms = ligand_mol.GetNumAtoms()
+    if n_atoms < 10 or 45 < n_atoms:
         test2_keys.append(key)
         test2_pkd.append(pkd)
         continue
+    if QED.qed(ligand_mol) < 0.4:
+        test2_keys.append(key)
+        test2_pkd.append(pkd)
+        continue
+
     count += 1
-    if count % 7 == 0:
+
+    if count % 5 == 0:
         test_keys.append(key)
         test_pkd.append(pkd)
     else:
