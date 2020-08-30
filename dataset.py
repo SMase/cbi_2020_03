@@ -12,11 +12,20 @@ random.seed(0)
 
 N_atom_features = 28
 
+def atom_feature(m, atom_i):
+    atom = m.GetAtomWithIdx(atom_i)
+    return np.array(utils.one_of_k_encoding_unk(atom.GetSymbol(),
+                                                ['C', 'N', 'O', 'S', 'F', 'P', 'Cl', 'Br', 'B', 'H']) +
+                    utils.one_of_k_encoding_unk(atom.GetDegree(), [0, 1, 2, 3, 4, 5]) +
+                    utils.one_of_k_encoding_unk(atom.GetTotalNumHs(), [0, 1, 2, 3, 4]) +
+                    utils.one_of_k_encoding_unk(atom.GetImplicitValence(), [0, 1, 2, 3, 4, 5]) +
+                    [atom.GetIsAromatic()])    # (10, 6, 5, 6, 1) --> total 28
+
 def get_atom_feature(m, is_ligand=True):
     n = m.GetNumAtoms()
     H = []
     for i in range(n):
-        H.append(utils.atom_feature(m, i))
+        H.append(atom_feature(m, i))
     H = np.array(H)        
     if is_ligand:
         H = np.concatenate([H, np.zeros((n, N_atom_features))], 1)
