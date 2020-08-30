@@ -88,6 +88,11 @@ test2_pkd = []
 
 count = 0
 for key, pkd in all_data:
+    if pkd < 2.5 or 9.5 < pkd:
+        test2_keys.append(key)
+        test2_pkd.append(pkd)
+        continue
+
     sdf_found = False
     for f in os.listdir(f'cbidata/{key}'):
         if f.endswith('.sdf'):
