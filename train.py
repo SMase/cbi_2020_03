@@ -42,7 +42,7 @@ def filter_and_stratify(*dataset):
 
     count = 0
     for key, pkd in all_data:
-        if pkd < 2:
+        if pkd < 2 or 11 < pkd:
             test2.append((key, pkd))
             continue
 
