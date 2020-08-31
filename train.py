@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch
 from torch.utils.data import DataLoader                                     
 import numpy as np
-import os, argparse, time, shutil, sys
+import os, argparse, time, shutil, sys, random
 import utils
 from rdkit import Chem
 from rdkit.Chem import QED
@@ -31,11 +31,14 @@ def read_ligand(dirname):
             break
     return ligand_mol if sdf_found else None
 
-def filter_and_stratify(*dataset):
+def filter_and_stratify(*dataset, random_stratify=False):
     all_data = []
     for _ in dataset:
         all_data += _
-    data = sorted(all_data, key=lambda x: x[1], reverse=True)
+    if random_stratify:
+        random.shuffle(all_data)
+    else:
+        data = sorted(all_data, key=lambda x: x[1], reverse=True)
     train = []
     test = []
     test2 = []
@@ -82,13 +85,16 @@ def main(args):
     save_dir = args.save_dir
 
     if args.clear_cache:
-        shutil.rmtree('/tmp/moldata')
+        try:
+            shutil.rmtree('/tmp/moldata')
+        except:
+            pass
 
     os.makedirs(save_dir, exist_ok=True)
 
     train = read_keyfile(args.train_keys)
     test = read_keyfile(args.test_keys)
-    train_keys, test_keys, test2_keys = filter_and_stratify(train, test)
+    train_keys, test_keys, test2_keys = filter_and_stratify(train, test, random_stratify=args.random_stratify)
 
     write_keys(train_keys, 'train.local.key')
     write_keys(test_keys, 'test.local.key')
@@ -212,6 +218,7 @@ if __name__ == '__main__':
     parser.add_argument("--test_keys", '-t', help="test keys", type=str, default='keys/val_keys.txt')
     parser.add_argument('--clear_cache', '-0', help='clear cache directory', action='store_true')
     parser.add_argument('--dataset_version', '-v', help='dataset version', type=int, default=2)
+    parser.add_argument('--random_stratify', '-R', help='random stratify', action='store_true')
     args = parser.parse_args()
     if args.dataset_version == 1:
         import dataset as ds
