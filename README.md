@@ -15,7 +15,7 @@ mkdir -p cbidata
 mv 2018/* select/* cbidata/
 rm -rf 2018 select
 
-python train.py -l 0.0002 -D 0.3 -E 1000 -g 0 -B 64 -v 2 -d cbidata -T keys/keys_select -t keys/keys_2018
+python train.py -l 0.0002 -D 0.3 -E 1000 -g 0 -B 64 -v 2 -d cbidata -T keys/keys_refined
 python test.py -g 0 -v 2 -d cbidata -S save/ -t test.local.keys
 ```
 
