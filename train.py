@@ -11,7 +11,10 @@ from rdkit.Chem import QED
 def read_keyfile(fname, local=False):
     keys = []
     for line in open(fname):
-        it = line.rstrip().split('\t')
+        line = line.rstrip()
+        if line.startswith('#'):
+            continue
+        it = line.split('\t')
         if local:
             pdb_code, value = it[0], float(it[1])
         else:
@@ -93,8 +96,7 @@ def main(args):
     os.makedirs(save_dir, exist_ok=True)
 
     train = read_keyfile(args.train_keys)
-    test = read_keyfile(args.test_keys)
-    train_keys, test_keys, test2_keys = filter_and_stratify(train, test, random_stratify=args.random_stratify)
+    train_keys, test_keys, test2_keys = filter_and_stratify(train, random_stratify=args.random_stratify)
 
     write_keys(train_keys, 'train.local.key')
     write_keys(test_keys, 'test.local.key')
@@ -215,7 +217,6 @@ if __name__ == '__main__':
     parser.add_argument("--initial_dev", help="initial value of dev", type=float, default=0.19818493842903845)
     parser.add_argument("--dropout_rate", '-D', help="dropout_rate", type=float, default=0.3)
     parser.add_argument("--train_keys", '-T', help="train keys", type=str, default='keys/train_keys.txt')
-    parser.add_argument("--test_keys", '-t', help="test keys", type=str, default='keys/val_keys.txt')
     parser.add_argument('--clear_cache', '-0', help='clear cache directory', action='store_true')
     parser.add_argument('--dataset_version', '-v', help='dataset version', type=int, default=2)
     parser.add_argument('--random_stratify', '-R', help='random stratify', action='store_true')

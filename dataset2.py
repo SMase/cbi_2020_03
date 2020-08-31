@@ -111,6 +111,8 @@ class MolDataset(Dataset):
                 break
         for m1 in Chem.SDMolSupplier(ligand_fname): break
         m2 = Chem.MolFromPDBFile(pocket_fname)
+        if not m2:
+            print(key)
 
         #prepare ligand
         n1 = m1.GetNumAtoms()
