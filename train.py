@@ -8,6 +8,11 @@ import utils
 from rdkit import Chem
 from rdkit.Chem import QED
 
+KINASE = set()
+for line in open('kinase_pdb', 'rt'):
+    line = line.strip()
+    KINASE.add(line)
+
 def read_keyfile(fname, local=False):
     keys = []
     for line in open(fname):
@@ -48,6 +53,9 @@ def filter_and_stratify(*dataset, random_stratify=False):
 
     count = 0
     for key, pkd in all_data:
+        if key not in KINASE:
+            continue
+
         if pkd < 2 or 11 < pkd:
             test2.append((key, pkd))
             continue

@@ -3,4 +3,5 @@ __pycache__/
 /figure.png
 /png/
 /save/
-/result.tsv
+/results*.tsv
+/*.local.key
