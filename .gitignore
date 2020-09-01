@@ -5,3 +5,5 @@ __pycache__/
 /save/
 /results*.tsv
 /*.local.key
+/cbidata/
+*.tar.bz2
