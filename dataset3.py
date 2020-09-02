@@ -13,49 +13,36 @@ from rdkit.Chem import ChemicalFeatures
 
 random.seed(0)
 
-N_atom_features = 18
-
-ARG_ANUM = {6:0, 7:1, 8:2, 9:3, 15:4, 16:5, 17:6}
-# Other atoms:7
-ARG_FEAT = {'Aro':8, 'Acc':13, 'Don':14, 'Hyd':15, 'Neg':16, 'Pos':17}
-# Ring:9
-ARG_HYB = {Chem.HybridizationType.SP3:10, Chem.HybridizationType.SP2:11, Chem.HybridizationType.SP:12}
-
 fdef_name = os.path.join(RDConfig.RDDataDir, 'BaseFeatures.fdef')
 factory = ChemicalFeatures.BuildFeatureFactory(fdef_name)
 
+N_atom_features = 18
+ARG_ANUM = {6:0, 7:1, 8:2, 9:3, 15:4, 16:5, 17:6} # Other atoms:7
+ARG_FEAT = {'Aro':8, 'Acc':13, 'Don':14, 'Hyd':15, 'Neg':16, 'Pos':17} # Ring:9
+ARG_HYB = {Chem.HybridizationType.SP3:10, Chem.HybridizationType.SP2:11, Chem.HybridizationType.SP:12}
+
 def get_atom_types(mol):
+    """
+    C N O F P S Cl X Aro Ring sp3 sp2 sp Acc Don Hyd Neg Pos
+    """
+
+    vecs = np.zeros((mol.GetNumAtoms(), N_atom_features), dtype=int)
     feats = factory.GetFeaturesForMol(mol)
-    features = {}
-    for sym in ['Acc', 'Don', 'Hyd', 'Neg', 'Pos', 'Aro', 'Lum', 'ZnB']:
-        features[sym] = set()
     for feat in feats:
         sym = feat.GetFamily()[:3]
-        [features[sym].add(i) for i in feat.GetAtomIds()]
-    features_lb = {}
-    for k, v in features.items():
-        for i in v:
-            if i not in features_lb:
-                features_lb[i] = set()
-            features_lb[i].add(k)
-
-    vecs = []
+        if sym not in ARG_FEAT:
+            continue
+        for atomidx in feat.GetAtomIds():
+            vecs[atomidx, ARG_FEAT[sym]] = 1
     for atom in mol.GetAtoms():
-        atom_feat = np.zeros(N_atom_features, dtype=int)
         an = atom.GetAtomicNum()
-        atom_feat[ARG_ANUM.get(an, 7)] = 1
+        atomidx = atom.GetIdx()
+        vecs[atomidx, ARG_ANUM.get(an, 7)] = 1
         hyb = atom.GetHybridization()
-        atom_feat[ARG_HYB.get(hyb)] = 1
+        if hyb in ARG_HYB:
+            vecs[atomidx, ARG_HYB[hyb]] = 1
         if atom.IsInRing():
-            atom_feat[9] = 1
-        idx = atom.GetIdx()
-        if idx in features_lb:
-            ff = features_lb[idx]
-            for F in ARG_FEAT:
-                if F in ff:
-                    atom_feat[ARG_FEAT.get(F)] = 1
-        vecs.append(atom_feat)
-    vecs = np.array(vecs)
+            vecs[atomidx, 9] = 1
     return vecs
 
 def get_atom_feature(m, is_ligand=True):
