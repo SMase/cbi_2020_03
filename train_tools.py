@@ -128,8 +128,10 @@ def write_results_to_csv(L, X, y, err, epoch):
 def show_bad_molecules(L, X, y, err, N):
     bads = list(filter(lambda v: 2.5 <= v[2], sorted(zip(L[0], X, X-y), key=lambda v: v[2], reverse=True)))
     if N//5 < len(bads):
-        print('--- Too may off-valued molecules ---')
+        print('--- Too many off-valued molecules ---')
         print()
+        return
+    elif len(bads) == 0:
         return
     mols = []
     errs = []
@@ -145,7 +147,7 @@ def show_bad_molecules(L, X, y, err, N):
         mols.append(mol)
         pdbs.append(pdb_code)
         svgs.append(molsvg(mol, width=250, height=150))
-    html = '<table border="1">'
+    html = '<table border="1" style="font-size: 120%;">'
     for svg, pdb_code, v, err in zip(svgs, pdbs, vs, errs):
         html += f'<tr><td>{svg.data}</td><td>{pdb_code}</td><td>{v:.3f}</td><td>{err:.3f}</td></tr>'
     html += '</table>'
