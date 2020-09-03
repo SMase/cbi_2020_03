@@ -126,29 +126,21 @@ def write_results_to_csv(L, X, y, err, epoch):
     return df
 
 def show_bad_molecules(L, X, y, err, N):
-    bads = list(filter(lambda v: 2.5 <= v[2], sorted(zip(L[0], X, X-y), key=lambda v: v[2], reverse=True)))
+    bads = list(filter(lambda v: 2.5 <= v[3], sorted(zip(L, X, y, X-y), key=lambda v: v[2], reverse=True)))
     if N//5 < len(bads):
-        print('--- Too many off-valued molecules ---')
+        print(f'--- Too many off-valued molecules ({len(bads)}/{len(L)}) ---')
         print()
         return
     elif len(bads) == 0:
         return
-    mols = []
-    errs = []
-    vs = []
     svgs = []
-    pdbs = []
     for bad in bads:
-        pdb_code, v, err = bad
-        errs.append(err)
-        vs.append(v)
+        pdb_code = bad[0]
         sdf_name = glob.glob(f'cbidata/{pdb_code}/*.sdf')[0]
         mol = Chem.MolFromSmiles(Chem.MolToSmiles(Chem.MolFromMolFile(sdf_name)))
-        mols.append(mol)
-        pdbs.append(pdb_code)
         svgs.append(molsvg(mol, width=250, height=150))
     html = '<table border="1" style="font-size: 120%;">'
-    for svg, pdb_code, v, err in zip(svgs, pdbs, vs, errs):
-        html += f'<tr><td>{svg.data}</td><td>{pdb_code}</td><td>{v:.3f}</td><td>{err:.3f}</td></tr>'
+    for svg, (pdb_code, x, y, err) in zip(svgs, bads):
+        html += f'<tr><td>{svg.data}</td><td>{pdb_code}</td><td>{x:.3f}</td><td>{y:.3f}</td><td>{err:.3f}</td></tr>'
     html += '</table>'
     display(HTML(html))
