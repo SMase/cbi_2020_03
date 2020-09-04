@@ -8,7 +8,7 @@ import os, random, pickle
 from rdkit import Chem
 import utils
 
-random.seed(0)
+# random.seed(0)
 
 N_atom_features = 1
 

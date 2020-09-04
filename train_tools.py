@@ -4,7 +4,7 @@ from rdkit import Chem
 from rdkit.Chem import QED
 from rdkit.Chem.Draw import rdMolDraw2D
 from matplotlib import pyplot as plt
-import os, random, glob
+import os, random, glob, time
 from IPython.display import SVG, HTML
 
 def get_kinase_set():
@@ -48,7 +48,7 @@ def filter_and_stratify(*dataset, random_stratify=False, kinase_check=False):
     if random_stratify:
         random.shuffle(all_data)
     else:
-        data = sorted(all_data, key=lambda x: x[1], reverse=True)
+        all_data = sorted(all_data, key=lambda x: x[1], reverse=True)
     train = []
     test = []
     test2 = []
@@ -126,7 +126,7 @@ def write_results_to_csv(L, X, y, err, epoch):
     return df
 
 def show_bad_molecules(L, X, y, err, N):
-    bads = list(filter(lambda v: 2.5 <= v[3], sorted(zip(L, X, y, X-y), key=lambda v: v[2], reverse=True)))
+    bads = list(filter(lambda v: 2.0 <= abs(v[3]), sorted(zip(L, X, y, y-X), key=lambda v: v[2], reverse=True)))
     if N//5 < len(bads):
         print(f'--- Too many off-valued molecules ({len(bads)}/{len(L)}) ---')
         print()

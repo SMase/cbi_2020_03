@@ -11,7 +11,7 @@ from rdkit.Chem.rdmolops import GetAdjacencyMatrix, Get3DDistanceMatrix
 from rdkit import Chem, RDConfig
 from rdkit.Chem import ChemicalFeatures
 
-random.seed(0)
+# random.seed(0)
 
 fdef_name = os.path.join(RDConfig.RDDataDir, 'BaseFeatures.fdef')
 factory = ChemicalFeatures.BuildFeatureFactory(fdef_name)
