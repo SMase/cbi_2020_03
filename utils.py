@@ -19,7 +19,7 @@ def initialize_model(model, device, load_save_file=False):
       print("Let's use", torch.cuda.device_count(), "GPUs!")
       # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
       model = nn.DataParallel(model)
-    model.to(device)
+    model = model.to(device)
     return model
 
 def one_of_k_encoding(x, allowable_set):

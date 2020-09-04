@@ -40,7 +40,7 @@ def read_ligand(dirname):
             break
     return ligand_mol if sdf_found else None
 
-def filter_and_stratify(*dataset, random_stratify=False):
+def filter_and_stratify(*dataset, random_stratify=False, kinase_check=False):
     kinase = get_kinase_set()
     all_data = []
     for _ in dataset:
@@ -55,7 +55,7 @@ def filter_and_stratify(*dataset, random_stratify=False):
 
     count = 0
     for key, pkd in all_data:
-        if key not in kinase:
+        if kinase_check and key not in kinase:
             continue
 
         if pkd < 2 or 11 < pkd:
@@ -121,6 +121,8 @@ def myplot(y_obs, y_pred, Los, Lps):
     plt.show()
 
 def write_results_to_csv(L, X, y, err, epoch):
+    print(len(L))
+    print(len(X))
     df = pd.DataFrame(dict(PDB=L, pval=X, predicted=y, err=err))
     df.to_csv(f'results_{epoch}.tsv', sep='\t')
     return df

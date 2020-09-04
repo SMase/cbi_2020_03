@@ -83,9 +83,11 @@ class MolDataset(Dataset):
                 ligand_fname = self.data_dir + '/' + key + '/' + ligand_name + '.sdf'
                 break
         for m1 in Chem.SDMolSupplier(ligand_fname): break
+        if not m1:
+            print('--------------------------------------------', key, ligand_name)
         m2 = Chem.MolFromPDBFile(pocket_fname)
         if not m2:
-            print(key)
+            print('--------------------------------------------', key)
 
         #prepare ligand
         n1 = m1.GetNumAtoms()
