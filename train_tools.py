@@ -121,8 +121,6 @@ def myplot(y_obs, y_pred, Los, Lps):
     plt.show()
 
 def write_results_to_csv(L, X, y, err, epoch):
-    print(len(L))
-    print(len(X))
     df = pd.DataFrame(dict(PDB=L, pval=X, predicted=y, err=err))
     df.to_csv(f'results_{epoch}.tsv', sep='\t')
     return df
