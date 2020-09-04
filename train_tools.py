@@ -127,7 +127,7 @@ def write_results_to_csv(L, X, y, err, epoch):
 
 def show_bad_molecules(L, X, y, err, N):
     bads = list(filter(lambda v: 2.0 <= abs(v[3]), sorted(zip(L, X, y, y-X), key=lambda v: v[2], reverse=True)))
-    if N//5 < len(bads):
+    if N//5 < len(bads) and 10 < len(bads):
         print(f'--- Too many off-valued molecules ({len(bads)}/{len(L)}) ---')
         print()
         return
