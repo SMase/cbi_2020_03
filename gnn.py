@@ -25,7 +25,6 @@ class gnn(torch.nn.Module):
         self.dev = nn.Parameter(torch.Tensor([args.initial_dev]).float())
         self.embede = nn.Linear(2*N_atom_features, d_graph_layer, bias = False)
         
-
     def embede_graph(self, data, is_train=True):
         c_hs, c_adjs1, c_adjs2, c_valid = data
         if is_train:
