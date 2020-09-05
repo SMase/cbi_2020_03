@@ -124,7 +124,7 @@ class MolDataset(Dataset):
         valid = np.zeros((n1+n2,), dtype=int)
         valid[:n1] = 1
 
-        Y = self.pKd[idx]
+        Y = int(self.pKd[idx] >= 8.5)
 
         # agg_Adj1 = np.zeros((1, 1))
 
