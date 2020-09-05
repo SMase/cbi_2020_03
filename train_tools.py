@@ -105,10 +105,7 @@ def myplot(y_obs, y_pred, Los, Lps):
     xs = list(range(len(Los)))
     ax1.plot(xs, Los)
     ax1.plot(xs, Lps)
-    if min(Los) < 10 and min(Lps) < 10:
-        _ymax = 15
-    else:
-        _ymax = 60
+    _ymax = 0.5
     ax1.set_ylim(0, _ymax)
     ax2.scatter(y_obs, y_pred)
     ax2.plot([ymin - yrange * 0.01, ymax + yrange * 0.01], [ymin - yrange * 0.01, ymax + yrange * 0.01])
