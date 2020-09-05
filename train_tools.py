@@ -134,6 +134,7 @@ def show_bad_molecules(L, X, y, err, N):
     elif len(bads) == 0:
         return
     svgs = []
+    bads.sort(key=lambda b: abs(b[3]), reverse=True)
     for bad in bads:
         pdb_code = bad[0]
         sdf_name = glob.glob(f'cbidata/{pdb_code}/*.sdf')[0]
