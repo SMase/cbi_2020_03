@@ -8,7 +8,7 @@ import argparse
 import time
 import pandas as pd
 from torch.utils.data import DataLoader                                     
-from dataset import MolDataset, collate_fn
+from dataset import MolDataset, collate_fn, DTISampler
 now = time.localtime()
 s = "%04d-%02d-%02d %02d:%02d:%02d" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
 print(s)
@@ -73,12 +73,36 @@ print ('number of parameters : ', sum(p.numel() for p in model.parameters() if p
 
 model = utils.initialize_model(model, device)
 
+cnt_dict = {
+    'range_0_2':[],
+    'range_2_3':[],
+    'range_3_4':[],
+    'range_4_5':[],
+    'range_5_6':[],
+    'range_6_7':[],
+    'range_7_8':[],
+    'range_8_9':[],
+    'range_9_10':[],
+    'range_10_14':[],
+}
+weight_tag_list = []
+for val in train_pkd:
+    for i, k in enumerate(cnt_dict.keys()):
+        if (int(k.split('_')[1]) <= val) & (val < int(k.split('_')[2])):
+            cnt_dict[k].append(val)
+            weight_tag_list.append(i)
+
+# rangeごとのweights
+range_w_tag = [1/len(cnt_dict[rng]) for rng in list(cnt_dict.keys())]
+train_weights = [range_w_tag[idx] for idx in weight_tag_list]
+train_sampler = DTISampler(train_weights, len(train_weights), replacement=True)
+
 # train and test dataset
 train_dataset = MolDataset(train_keys, train_pkd, args.data_fpath, args.distance)
 test_dataset = MolDataset(test_keys, test_pkd, args.data_fpath, args.distance)
 
 train_dataloader = DataLoader(train_dataset, args.batch_size, \
-     shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
+     shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn, sampler=train_sampler)
 test_dataloader = DataLoader(test_dataset, args.batch_size, \
      shuffle=False, num_workers=args.num_workers, collate_fn=collate_fn)
 
